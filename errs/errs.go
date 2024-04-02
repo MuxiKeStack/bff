@@ -1,0 +1,12 @@
+package errs
+
+// User 部分，模块代码使用 01
+const (
+	// UserInvalidInput 一个非常含糊的错误码，代表用户相关的API参数不对
+	UserInvalidInput = 401001
+	// UserInternalServerError 一个非常含糊的错误码。代表用户模块系统内部错误
+	UserInternalServerError = 501001
+
+	// UserInvalidSidOrPassword 用户输入的学号或者密码不对
+	UserInvalidSidOrPassword = 401002
+)
