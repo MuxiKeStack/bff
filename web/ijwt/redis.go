@@ -49,17 +49,19 @@ func (r *RedisJWTHandler) ExtractToken(ctx *gin.Context) string {
 
 func (r *RedisJWTHandler) SetLoginToken(ctx *gin.Context, uid int64) error {
 	ssid := uuid.New().String()
-	err := r.setRefreshToken(ctx, uid, ssid)
+	userAgent := ctx.GetHeader("User-Agent")
+	err := r.setRefreshToken(ctx, uid, ssid, userAgent)
 	if err != nil {
 		return err
 	}
-	return r.SetJWTToken(ctx, uid, ssid)
+	return r.SetJWTToken(ctx, uid, ssid, userAgent)
 }
 
-func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid string) error {
+func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid string, userAgent string) error {
 	rc := RefreshClaims{
-		Uid:  uid,
-		Ssid: ssid,
+		Uid:       uid,
+		Ssid:      ssid,
+		UserAgent: userAgent,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(r.rcExpiration)),
 		},
@@ -73,11 +75,11 @@ func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 	return nil
 }
 
-func (r *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string) error {
+func (r *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string, userAgent string) error {
 	uc := UserClaims{
 		Uid:       uid,
 		Ssid:      ssid,
-		UserAgent: ctx.GetHeader("User-Agent"),
+		UserAgent: userAgent,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 		},
@@ -116,6 +118,7 @@ type UserClaims struct {
 
 type RefreshClaims struct {
 	jwt.RegisteredClaims
-	Uid  int64
-	Ssid string
+	Uid       int64
+	Ssid      string
+	UserAgent string
 }

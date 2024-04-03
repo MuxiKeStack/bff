@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-// 受制于泛型，我们这里只能使用包变量，我深恶痛绝的包变量
+// 受制于泛型，这里只能使用包变量
 var log logger.Logger = logger.NewNopLogger()
 
 var vector *prometheus.CounterVec
@@ -38,7 +38,7 @@ func WrapClaimsAndReq[Req any](fn func(*gin.Context, Req, UserClaims) (Result, e
 				logger.String("path", ctx.Request.URL.Path))
 			return
 		}
-		// 注意，这里要求放进去 ctx 的不能是*UserClaims，这是常见的一个错误
+		// 这里要求放进去 ctx 的不能是*UserClaims，这是常见的一个错误
 		claims, ok := rawVal.(UserClaims)
 		if !ok {
 			ctx.AbortWithStatus(http.StatusUnauthorized)

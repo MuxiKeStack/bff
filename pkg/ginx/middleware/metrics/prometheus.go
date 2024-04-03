@@ -45,7 +45,6 @@ func (p *PrometheusBuilder) BuildResponseTime() gin.HandlerFunc {
 		method := ctx.Request.Method
 		start := time.Now()
 		defer func() {
-			// 最后我们再来统计一下
 			vector.WithLabelValues(method, ctx.FullPath(),
 				strconv.Itoa(ctx.Writer.Status())).
 				// 执行时间
@@ -56,7 +55,7 @@ func (p *PrometheusBuilder) BuildResponseTime() gin.HandlerFunc {
 }
 
 func (p *PrometheusBuilder) BuildActiveRequest() gin.HandlerFunc {
-	// 一般我们只关心总的活跃请求数
+	// 一般只关心总的活跃请求数
 	gauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: p.Namespace,
 		Subsystem: p.Subsystem,

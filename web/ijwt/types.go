@@ -9,7 +9,7 @@ type Handler interface {
 	ClearToken(ctx *gin.Context) error
 	ExtractToken(ctx *gin.Context) string
 	SetLoginToken(ctx *gin.Context, uid int64) error
-	SetJWTToken(ctx *gin.Context, uid int64, ssid string) error
+	SetJWTToken(ctx *gin.Context, uid int64, ssid string, userAgent string) error
 	CheckSession(ctx *gin.Context, ssid string) (bool, error)
 	JWTKey() []byte
 	RCJWTKey() []byte

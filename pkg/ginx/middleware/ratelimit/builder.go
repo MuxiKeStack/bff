@@ -40,8 +40,6 @@ func (b *Builder) Build() gin.HandlerFunc {
 		limited, err := b.limit(ctx)
 		if err != nil {
 			log.Println(err)
-			// 这一步很有意思，就是如果这边出错了
-			// 要怎么办？
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}

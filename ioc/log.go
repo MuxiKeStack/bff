@@ -8,8 +8,7 @@ import (
 )
 
 func InitLogger() logger.Logger {
-	// 这里我们用一个小技巧，
-	// 就是直接使用 zap 本身的配置结构体来处理
+	// 直接使用 zap 本身的配置结构体来处理
 	// 配置Lumberjack以支持日志文件的滚动
 	lumberjackLogger := &lumberjack.Logger{
 		// 注意有没有权限

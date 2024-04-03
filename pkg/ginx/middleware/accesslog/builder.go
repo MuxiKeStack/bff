@@ -66,7 +66,6 @@ func (b *MiddlewareBuilder) Build() gin.HandlerFunc {
 	}
 }
 
-// AccessLog 你可以打印很多的信息，根据需要自己加
 type AccessLog struct {
 	Method     string `json:"method"`
 	Path       string `json:"path"`
