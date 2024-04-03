@@ -13,16 +13,29 @@ type UserHandler struct {
 	svc userv1.UserServiceClient
 }
 
-func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
-	ug := s.Group("/users")
-	ug.POST("/login_ccnu", ginx.WrapBody(h.LoginByCCNU))
+func NewUserHandler(hdl ijwt.Handler, svc userv1.UserServiceClient) *UserHandler {
+	return &UserHandler{Handler: hdl, svc: svc}
 }
 
+func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
+	ug := s.Group("/users")
+	ug.POST("/login_ccnu", ginx.WrapReq(h.LoginByCCNU))
+}
+
+// @Summary ccnu登录
+// @Description 通过学号和密码进行登录认证
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param body body LoginByCCNUReq true "登录请求体"
+// @Success 200 {object} ginx.Result "登录成功"
+// @Router /users/login_ccnu [post]
 func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Result, error) {
 	resp, err := h.svc.LoginByCCNU(ctx, &userv1.LoginByCCNURequest{
 		StudentId: req.StudentId,
 		Password:  req.Password,
 	})
+
 	if err == nil {
 		err := h.SetLoginToken(ctx, resp.User.Id)
 		if err != nil {
@@ -37,7 +50,6 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 			Data: nil,
 		}, nil
 	}
-
 	switch {
 	case userv1.IsInvalidSidOrPwd(err):
 		return ginx.Result{

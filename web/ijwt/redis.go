@@ -14,15 +14,15 @@ type RedisJWTHandler struct {
 	cmd           redis.Cmdable
 	signingMethod jwt.SigningMethod
 	rcExpiration  time.Duration
-	jwtKey        string
-	rcJWTKey      string
+	jwtKey        []byte
+	rcJWTKey      []byte
 }
 
-func (r *RedisJWTHandler) JWTKey() string {
+func (r *RedisJWTHandler) JWTKey() []byte {
 	return r.jwtKey
 }
 
-func (r *RedisJWTHandler) RCJWTKey() string {
+func (r *RedisJWTHandler) RCJWTKey() []byte {
 	return r.rcJWTKey
 }
 
@@ -64,7 +64,7 @@ func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(r.rcExpiration)),
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES512, rc)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, rc)
 	tokenStr, err := token.SignedString(r.RCJWTKey())
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (r *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string) 
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES512, uc)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, uc)
 	tokenStr, err := token.SignedString(r.JWTKey())
 	if err != nil {
 		return err
@@ -100,10 +100,10 @@ func (r *RedisJWTHandler) CheckSession(ctx *gin.Context, ssid string) (bool, err
 func NewRedisJWTHandler(cmd redis.Cmdable, jwtKey string, rcJWTKey string) Handler {
 	return &RedisJWTHandler{
 		cmd:           cmd,
-		signingMethod: jwt.SigningMethodES512,
+		signingMethod: jwt.SigningMethodHS256,
 		rcExpiration:  time.Hour * 24 * 7,
-		jwtKey:        jwtKey,
-		rcJWTKey:      rcJWTKey,
+		jwtKey:        []byte(jwtKey),
+		rcJWTKey:      []byte(rcJWTKey),
 	}
 }
 

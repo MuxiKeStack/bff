@@ -1,7 +1,8 @@
 package middleware
 
 import (
-	"github.com/big-dust/ZhiJing-BE/internal/web/ijwt"
+	"github.com/MuxiKeStack/bff/web/ijwt"
+	"github.com/ecodeclub/ekit/set"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
@@ -9,23 +10,22 @@ import (
 )
 
 type LoginMiddlewareBuilder struct {
+	publicPaths set.Set[string]
 	ijwt.Handler
 }
 
 func NewLoginMiddleWareBuilder(hdl ijwt.Handler) *LoginMiddlewareBuilder {
-	return &LoginMiddlewareBuilder{Handler: hdl}
+	s := set.NewMapSet[string](3)
+	s.Add("/users/login_ccnu")
+	return &LoginMiddlewareBuilder{
+		publicPaths: s,
+		Handler:     hdl,
+	}
 }
 
-func (m *LoginMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
+func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		path := ctx.Request.URL.Path
-		if path == "/users/login" ||
-			path == "/users/signup" ||
-			path == "/users/login_email" ||
-			path == "/users/login_email/code/send" ||
-			path == "/users/refresh_token" ||
-			path == "/oauth2/wechat/authurl" ||
-			path == "/oauth2/wechat/callback/login" {
+		if m.publicPaths.Exist(ctx.Request.URL.Path) {
 			return
 		}
 		// 改为jwt鉴权

@@ -1,0 +1,71 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/users/login_ccnu": {
+            "post": {
+                "description": "通过学号和密码进行登录认证",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "ccnu登录",
+                "parameters": [
+                    {
+                        "description": "登录请求体",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.LoginByCCNUReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录成功",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ginx.Result": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "错误码，非 0 表示失败",
+                    "type": "integer"
+                },
+                "data": {},
+                "msg": {
+                    "description": "错误或成功 描述",
+                    "type": "string"
+                }
+            }
+        },
+        "web.LoginByCCNUReq": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "description": "密码",
+                    "type": "string"
+                },
+                "student_id": {
+                    "description": "学号",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
