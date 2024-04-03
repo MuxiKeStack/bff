@@ -11,7 +11,7 @@ import (
 
 func InitUserClient(ecli *clientv3.Client) userv1.UserServiceClient {
 	type Config struct {
-		Endpoint string `json:"endpoint"`
+		Endpoint string `yaml:"endpoint"`
 	}
 	var cfg Config
 	err := viper.UnmarshalKey("grpc.client.user", &cfg)
