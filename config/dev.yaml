@@ -1,0 +1,18 @@
+http:
+  addr: ":8088"
+
+redis:
+  addr: "localhost:6379"
+
+etcd:
+  endpoints:
+    - "localhost:12379"
+
+grpc:
+  client:
+    user:
+      endpoint: "discovery:///user"
+
+jwt:
+  jwtKey: "mc8QAegcrdOmGwQthrx3cgd2hd8CVfaH"
+  refreshKey: "Hx9g8TinCH30NqckgKfFO2KkbaeCUMmj"
