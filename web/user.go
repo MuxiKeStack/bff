@@ -23,11 +23,11 @@ func NewUserHandler(hdl ijwt.Handler, svc userv1.UserServiceClient) *UserHandler
 func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 	ug := s.Group("/users")
 	ug.POST("/login_ccnu", ginx.WrapReq(h.LoginByCCNU))
-	ug.POST("/logout", h.Logout)
+	ug.POST("/logout", ginx.Wrap(h.Logout))
 	ug.GET("/refresh_token", h.RefreshToken)
 	ug.POST("/edit", ginx.WrapClaimsAndReq(h.Edit))
 	ug.GET("/profile", ginx.WrapClaims(h.Profile))
-	ug.GET("/:userId/profile", h.ProfileById)
+	ug.GET("/:userId/profile", ginx.Wrap(h.ProfileById))
 }
 
 // @Summary ccnu登录
@@ -45,7 +45,7 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 	})
 
 	if err == nil {
-		err := h.SetLoginToken(ctx, resp.User.Id)
+		err := h.SetLoginToken(ctx, resp.User.Id, req.StudentId, req.Password)
 		if err != nil {
 			return ginx.Result{
 				Code: errs.UserInternalServerError,
@@ -77,18 +77,17 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 // @Produce json
 // @Success 200 {object} ginx.Result "Success"
 // @Router /users/logout [post]
-func (h *UserHandler) Logout(ctx *gin.Context) {
+func (h *UserHandler) Logout(ctx *gin.Context) (ginx.Result, error) {
 	err := h.ClearToken(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{
+		return ginx.Result{
 			Code: errs.UserInternalServerError,
 			Msg:  "系统异常",
-		})
-		return
+		}, err
 	}
-	ctx.JSON(http.StatusOK, ginx.Result{
+	return ginx.Result{
 		Msg: "Success",
-	})
+	}, nil
 }
 
 // @Summary 刷新短token
@@ -118,7 +117,13 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	err = h.SetJWTToken(ctx, rc.Uid, rc.Ssid, rc.UserAgent)
+	err = h.SetJWTToken(ctx, ijwt.ClaimParams{
+		Uid:       rc.Uid,
+		StudentId: rc.StudentId,
+		Password:  rc.Password,
+		Ssid:      rc.Ssid,
+		UserAgent: rc.UserAgent,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: errs.UserInternalServerError,
@@ -192,30 +197,28 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 // @Produce json
 // @Success 200 {object} ginx.Result{data=UserPublicProfileVo} "Success"
 // @Router /users/:userId/profile [get]
-func (h *UserHandler) ProfileById(ctx *gin.Context) {
+func (h *UserHandler) ProfileById(ctx *gin.Context) (ginx.Result, error) {
 	uidStr := ctx.Param("userId")
 	uid, err := strconv.ParseInt(uidStr, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{
+		return ginx.Result{
 			Code: errs.UserInvalidInput,
 			Msg:  "无效的输入参数",
-		})
-		return
+		}, err
 	}
 	res, err := h.svc.Profile(ctx, &userv1.ProfileRequest{Uid: uid})
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{
+		return ginx.Result{
 			Code: errs.UserInternalServerError,
 			Msg:  "系统异常",
-		})
-		return
+		}, err
 	}
-	ctx.JSON(http.StatusOK, ginx.Result{
+	return ginx.Result{
 		Msg: "Success",
 		Data: UserPublicProfileVo{
 			Id:       res.User.Id,
 			Avatar:   res.User.Avatar,
 			Nickname: res.User.Nickname,
 		},
-	})
+	}, nil
 }
