@@ -8,13 +8,13 @@ import (
 
 func InitJwtHandler(cmd redis.Cmdable) ijwt.Handler {
 	type Config struct {
-		jwtKey     string `yaml:"jwtKey"`
-		refreshKey string `yaml:"refreshKey"`
+		JwtKey     string `yaml:"jwtKey"`
+		RefreshKey string `yaml:"refreshKey"`
 	}
 	var cfg Config
 	err := viper.UnmarshalKey("jwt", &cfg)
 	if err != nil {
 		panic(err)
 	}
-	return ijwt.NewRedisJWTHandler(cmd, cfg.jwtKey, cfg.refreshKey)
+	return ijwt.NewRedisJWTHandler(cmd, cfg.JwtKey, cfg.RefreshKey)
 }

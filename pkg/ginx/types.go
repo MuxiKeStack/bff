@@ -2,7 +2,6 @@ package ginx
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type Server struct {
@@ -19,11 +18,4 @@ type Result struct {
 	Code int    `json:"code"` // 错误码，非 0 表示失败
 	Msg  string `json:"msg"`  // 错误或成功 描述
 	Data any    `json:"data"`
-}
-
-type UserClaims struct {
-	Uid       int64
-	UserAgent string
-	Ssid      string
-	jwt.RegisteredClaims
 }

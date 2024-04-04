@@ -32,7 +32,7 @@ func (r *RedisJWTHandler) ClearToken(ctx *gin.Context) error {
 	ctx.Header("x-refresh-token", "")
 	// 在session上记录已过期
 	uc := ctx.MustGet("user").(UserClaims)
-	return r.cmd.Set(ctx, fmt.Sprintf("users:ssid:%s", uc.Ssid), "", r.rcExpiration).Err()
+	return r.cmd.Set(ctx, fmt.Sprintf("kstack:users:ssid:%s", uc.Ssid), "", r.rcExpiration).Err()
 }
 
 func (r *RedisJWTHandler) ExtractToken(ctx *gin.Context) string {
@@ -95,7 +95,7 @@ func (r *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string, 
 
 // 布隆过滤器可以优化-> 询问得到不在就确定未退出登录  询问在还是需要redis兜底进一步确定状态
 func (r *RedisJWTHandler) CheckSession(ctx *gin.Context, ssid string) (bool, error) {
-	val, err := r.cmd.Exists(ctx, fmt.Sprintf("users:ssid:%s", ssid)).Result()
+	val, err := r.cmd.Exists(ctx, fmt.Sprintf("kstack:users:ssid:%s", ssid)).Result()
 	return val > 0, err
 }
 

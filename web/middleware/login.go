@@ -24,9 +24,14 @@ func NewLoginMiddleWareBuilder(hdl ijwt.Handler) *LoginMiddlewareBuilder {
 	}
 }
 
+func (m *LoginMiddlewareBuilder) isPublic(path string) bool {
+	return m.publicPaths.Exist(path) ||
+		strings.HasSuffix(strings.TrimPrefix(path, "/users/"), "/profile")
+}
+
 func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if m.publicPaths.Exist(ctx.Request.URL.Path) {
+		if m.isPublic(ctx.Request.URL.Path) {
 			return
 		}
 		// 改为jwt鉴权
@@ -43,8 +48,8 @@ func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		tokenStr := segs[1]
-		uc := &ijwt.UserClaims{}
-		token, err := jwt.ParseWithClaims(tokenStr, uc, func(*jwt.Token) (interface{}, error) {
+		uc := ijwt.UserClaims{}
+		token, err := jwt.ParseWithClaims(tokenStr, &uc, func(*jwt.Token) (interface{}, error) {
 			// 可以根据具体情况给出不同的key
 			return m.JWTKey(), nil
 		})
@@ -81,6 +86,6 @@ func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 		//	}
 		//	ctx.Header("x-ijwt-token", tokenStr)
 		//}
-		//ctx.Set("user", uc)
+		ctx.Set("user", uc)
 	}
 }

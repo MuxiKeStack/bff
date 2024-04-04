@@ -2,6 +2,7 @@ package ginx
 
 import (
 	"github.com/MuxiKeStack/bff/pkg/logger"
+	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
@@ -23,7 +24,7 @@ func SetLogger(l logger.Logger) {
 }
 
 // WrapClaimsAndReq 如果做成中间件来源出去，那么直接耦合 UserClaims 也是不好的。
-func WrapClaimsAndReq[Req any](fn func(*gin.Context, Req, UserClaims) (Result, error)) gin.HandlerFunc {
+func WrapClaimsAndReq[Req any](fn func(*gin.Context, Req, ijwt.UserClaims) (Result, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req Req
 		if err := ctx.Bind(&req); err != nil {
@@ -39,7 +40,7 @@ func WrapClaimsAndReq[Req any](fn func(*gin.Context, Req, UserClaims) (Result, e
 			return
 		}
 		// 这里要求放进去 ctx 的不能是*UserClaims，这是常见的一个错误
-		claims, ok := rawVal.(UserClaims)
+		claims, ok := rawVal.(ijwt.UserClaims)
 		if !ok {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			log.Error("无法获得 claims",
@@ -87,7 +88,7 @@ func Wrap(fn func(*gin.Context) (Result, error)) gin.HandlerFunc {
 }
 
 // WrapClaims 复制粘贴
-func WrapClaims(fn func(*gin.Context, UserClaims) (Result, error)) gin.HandlerFunc {
+func WrapClaims(fn func(*gin.Context, ijwt.UserClaims) (Result, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 可以用包变量来配置，还是那句话，因为泛型的限制，这里只能用包变量
 		rawVal, ok := ctx.Get("user")
@@ -98,7 +99,7 @@ func WrapClaims(fn func(*gin.Context, UserClaims) (Result, error)) gin.HandlerFu
 			return
 		}
 		// 注意，这里要求放进去 ctx 的不能是*UserClaims，这是常见的一个错误
-		claims, ok := rawVal.(UserClaims)
+		claims, ok := rawVal.(ijwt.UserClaims)
 		if !ok {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			log.Error("无法获得 claims",
