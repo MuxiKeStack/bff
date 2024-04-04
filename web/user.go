@@ -24,6 +24,7 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 	ug.POST("/login_ccnu", ginx.WrapReq(h.LoginByCCNU))
 	ug.POST("/logout", h.Logout)
 	ug.GET("/refresh_token", h.RefreshToken)
+	ug.POST("/edit", ginx.WrapClaimsAndReq(h.Edit))
 }
 
 // @Summary ccnu登录
@@ -111,4 +112,21 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ginx.Result{
 		Msg: "Success",
 	})
+}
+
+func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ginx.UserClaims) (ginx.Result, error) {
+	_, err := h.svc.UpdateNonSensitiveInfo(ctx, &userv1.UpdateNonSensitiveInfoRequest{
+		Uid:      uc.Uid,
+		Avatar:   req.Avatar,
+		Nickname: req.Nickname,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.UserInternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+	}, nil
 }

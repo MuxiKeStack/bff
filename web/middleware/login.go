@@ -17,6 +17,7 @@ type LoginMiddlewareBuilder struct {
 func NewLoginMiddleWareBuilder(hdl ijwt.Handler) *LoginMiddlewareBuilder {
 	s := set.NewMapSet[string](3)
 	s.Add("/users/login_ccnu")
+	s.Add("/users/refresh_token")
 	return &LoginMiddlewareBuilder{
 		publicPaths: s,
 		Handler:     hdl,
