@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"strconv"
 )
 
 type UserHandler struct {
@@ -25,6 +26,9 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 	ug.POST("/logout", h.Logout)
 	ug.GET("/refresh_token", h.RefreshToken)
 	ug.POST("/edit", ginx.WrapClaimsAndReq(h.Edit))
+	ug.GET("/profile", ginx.WrapClaims(h.Profile))
+	ug.GET("/:userId/profile", h.ProfileById)
+
 }
 
 // @Summary ccnu登录
@@ -129,4 +133,54 @@ func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ginx.UserClaims
 	return ginx.Result{
 		Msg: "Success",
 	}, nil
+}
+
+func (h *UserHandler) Profile(ctx *gin.Context, uc ginx.UserClaims) (ginx.Result, error) {
+	res, err := h.svc.Profile(ctx, &userv1.ProfileRequest{Uid: uc.Uid})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.UserInternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+		Data: UserVo{
+			Id:        res.User.Id,
+			StudentId: res.User.StudentId,
+			Avatar:    res.User.Avatar,
+			Nickname:  res.User.Nickname,
+			New:       res.User.New,
+			Utime:     res.User.Utime,
+			Ctime:     res.User.Ctime,
+		},
+	}, nil
+}
+
+func (h *UserHandler) ProfileById(ctx *gin.Context) {
+	uidStr := ctx.Param("userId")
+	uid, err := strconv.ParseInt(uidStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, ginx.Result{
+			Code: errs.UserInvalidInput,
+			Msg:  "无效的输入参数",
+		})
+		return
+	}
+	res, err := h.svc.Profile(ctx, &userv1.ProfileRequest{Uid: uid})
+	if err != nil {
+		ctx.JSON(http.StatusOK, ginx.Result{
+			Code: errs.UserInternalServerError,
+			Msg:  "系统异常",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, ginx.Result{
+		Msg: "Success",
+		Data: UserVo{
+			Id:       res.User.Id,
+			Avatar:   res.User.Avatar,
+			Nickname: res.User.Nickname,
+		},
+	})
 }

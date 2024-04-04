@@ -9,3 +9,13 @@ type UserEditReq struct {
 	Avatar   string `json:"avatar"`
 	Nickname string `json:"nickname"`
 }
+
+type UserVo struct {
+	Id        int64
+	StudentId string
+	Avatar    string
+	Nickname  string
+	New       bool
+	Utime     int64
+	Ctime     int64
+}
