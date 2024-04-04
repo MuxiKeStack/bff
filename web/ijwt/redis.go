@@ -47,24 +47,31 @@ func (r *RedisJWTHandler) ExtractToken(ctx *gin.Context) string {
 	return segs[1]
 }
 
-func (r *RedisJWTHandler) SetLoginToken(ctx *gin.Context, uid int64) error {
-	ssid := uuid.New().String()
-	userAgent := ctx.GetHeader("User-Agent")
-	err := r.setRefreshToken(ctx, uid, ssid, userAgent)
+func (r *RedisJWTHandler) SetLoginToken(ctx *gin.Context, uid int64, studentId string, password string) error {
+	cp := ClaimParams{
+		Uid:       uid,
+		StudentId: studentId,
+		Password:  password,
+		Ssid:      uuid.New().String(),
+		UserAgent: ctx.GetHeader("User-Agent"),
+	}
+	err := r.setRefreshToken(ctx, cp)
 	if err != nil {
 		return err
 	}
-	return r.SetJWTToken(ctx, uid, ssid, userAgent)
+	return r.SetJWTToken(ctx, cp)
 }
 
-func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid string, userAgent string) error {
+func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, cp ClaimParams) error {
 	rc := RefreshClaims{
-		Uid:       uid,
-		Ssid:      ssid,
-		UserAgent: userAgent,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(r.rcExpiration)),
 		},
+		Uid:       cp.Uid,
+		StudentId: cp.StudentId,
+		Password:  cp.Password,
+		Ssid:      cp.Ssid,
+		UserAgent: cp.UserAgent,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, rc)
 	tokenStr, err := token.SignedString(r.RCJWTKey())
@@ -75,14 +82,16 @@ func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 	return nil
 }
 
-func (r *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string, userAgent string) error {
+func (r *RedisJWTHandler) SetJWTToken(ctx *gin.Context, cp ClaimParams) error {
 	uc := UserClaims{
-		Uid:       uid,
-		Ssid:      ssid,
-		UserAgent: userAgent,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 		},
+		Uid:       cp.Uid,
+		StudentId: cp.StudentId,
+		Password:  cp.Password,
+		Ssid:      cp.Ssid,
+		UserAgent: cp.UserAgent,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, uc)
 	tokenStr, err := token.SignedString(r.JWTKey())
@@ -112,6 +121,8 @@ func NewRedisJWTHandler(cmd redis.Cmdable, jwtKey string, rcJWTKey string) Handl
 type UserClaims struct {
 	jwt.RegisteredClaims
 	Uid       int64
+	StudentId string
+	Password  string
 	Ssid      string
 	UserAgent string
 }
@@ -119,6 +130,8 @@ type UserClaims struct {
 type RefreshClaims struct {
 	jwt.RegisteredClaims
 	Uid       int64
+	StudentId string
+	Password  string
 	Ssid      string
 	UserAgent string
 }
