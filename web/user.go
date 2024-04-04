@@ -28,7 +28,6 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 	ug.POST("/edit", ginx.WrapClaimsAndReq(h.Edit))
 	ug.GET("/profile", ginx.WrapClaims(h.Profile))
 	ug.GET("/:userId/profile", h.ProfileById)
-
 }
 
 // @Summary ccnu登录
@@ -37,7 +36,7 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 // @Accept json
 // @Produce json
 // @Param body body LoginByCCNUReq true "登录请求体"
-// @Success 200 {object} ginx.Result "登录成功"
+// @Success 200 {object} ginx.Result "Success"
 // @Router /users/login_ccnu [post]
 func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Result, error) {
 	resp, err := h.svc.LoginByCCNU(ctx, &userv1.LoginByCCNURequest{
@@ -71,6 +70,13 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 	}
 }
 
+// @Summary 登出(销毁token)
+// @Description 通过短token登出
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} ginx.Result "Success"
+// @Router /users/logout [post]
 func (h *UserHandler) Logout(ctx *gin.Context) {
 	err := h.ClearToken(ctx)
 	if err != nil {
@@ -85,6 +91,13 @@ func (h *UserHandler) Logout(ctx *gin.Context) {
 	})
 }
 
+// @Summary 刷新短token
+// @Description 通过长token刷新短token
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} ginx.Result "Success"
+// @Router /users/refresh_token [get]
 func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 	tokenStr := h.ExtractToken(ctx)
 	rc := &ijwt.RefreshClaims{}
@@ -118,7 +131,15 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 	})
 }
 
-func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ginx.UserClaims) (ginx.Result, error) {
+// @Summary 编辑个人信息
+// @Description
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param body body UserEditReq true "编辑用户信息请求体"
+// @Success 200 {object} ginx.Result "Success"
+// @Router /users/edit [post]
+func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	_, err := h.svc.UpdateNonSensitiveInfo(ctx, &userv1.UpdateNonSensitiveInfoRequest{
 		Uid:      uc.Uid,
 		Avatar:   req.Avatar,
@@ -135,7 +156,14 @@ func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ginx.UserClaims
 	}, nil
 }
 
-func (h *UserHandler) Profile(ctx *gin.Context, uc ginx.UserClaims) (ginx.Result, error) {
+// @Summary 获取用户信息[自己]
+// @Description
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} ginx.Result{data=UserProfileVo} "Success"
+// @Router /users/profile [get]
+func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
 	res, err := h.svc.Profile(ctx, &userv1.ProfileRequest{Uid: uc.Uid})
 	if err != nil {
 		return ginx.Result{
@@ -145,7 +173,7 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ginx.UserClaims) (ginx.Result
 	}
 	return ginx.Result{
 		Msg: "Success",
-		Data: UserVo{
+		Data: UserProfileVo{
 			Id:        res.User.Id,
 			StudentId: res.User.StudentId,
 			Avatar:    res.User.Avatar,
@@ -157,6 +185,13 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ginx.UserClaims) (ginx.Result
 	}, nil
 }
 
+// @Summary 获取用户信息[公开]
+// @Description
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} ginx.Result{data=UserPublicProfileVo} "Success"
+// @Router /users/:userId/profile [get]
 func (h *UserHandler) ProfileById(ctx *gin.Context) {
 	uidStr := ctx.Param("userId")
 	uid, err := strconv.ParseInt(uidStr, 10, 64)
@@ -177,7 +212,7 @@ func (h *UserHandler) ProfileById(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, ginx.Result{
 		Msg: "Success",
-		Data: UserVo{
+		Data: UserPublicProfileVo{
 			Id:       res.User.Id,
 			Avatar:   res.User.Avatar,
 			Nickname: res.User.Nickname,
