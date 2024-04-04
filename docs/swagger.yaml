@@ -18,9 +18,83 @@ definitions:
         description: 学号
         type: string
     type: object
+  web.UserEditReq:
+    properties:
+      avatar:
+        type: string
+      nickname:
+        type: string
+    type: object
+  web.UserProfileVo:
+    properties:
+      avatar:
+        type: string
+      ctime:
+        type: integer
+      id:
+        type: integer
+      new:
+        description: 是否为新用户，新用户尚未编辑过个人信息
+        type: boolean
+      nickname:
+        type: string
+      studentId:
+        type: string
+      utime:
+        type: integer
+    type: object
+  web.UserPublicProfileVo:
+    properties:
+      avatar:
+        type: string
+      id:
+        type: integer
+      nickname:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /users/:userId/profile:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.UserPublicProfileVo'
+              type: object
+      summary: 获取用户信息[公开]
+      tags:
+      - 用户
+  /users/edit:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 编辑用户信息请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/web.UserEditReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 编辑个人信息
+      tags:
+      - 用户
   /users/login_ccnu:
     post:
       consumes:
@@ -37,10 +111,59 @@ paths:
       - application/json
       responses:
         "200":
-          description: 登录成功
+          description: Success
           schema:
             $ref: '#/definitions/ginx.Result'
       summary: ccnu登录
+      tags:
+      - 用户
+  /users/logout:
+    post:
+      consumes:
+      - application/json
+      description: 通过短token登出
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 登出(销毁token)
+      tags:
+      - 用户
+  /users/profile:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.UserProfileVo'
+              type: object
+      summary: 获取用户信息[自己]
+      tags:
+      - 用户
+  /users/refresh_token:
+    get:
+      consumes:
+      - application/json
+      description: 通过长token刷新短token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 刷新短token
       tags:
       - 用户
 swagger: "2.0"

@@ -15,6 +15,73 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/users/:userId/profile": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取用户信息[公开]",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.UserPublicProfileVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/users/edit": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "编辑个人信息",
+                "parameters": [
+                    {
+                        "description": "编辑用户信息请求体",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.UserEditReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
         "/users/login_ccnu": {
             "post": {
                 "description": "通过学号和密码进行登录认证",
@@ -41,7 +108,87 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "登录成功",
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/logout": {
+            "post": {
+                "description": "通过短token登出",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "登出(销毁token)",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/profile": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取用户信息[自己]",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.UserProfileVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/users/refresh_token": {
+            "get": {
+                "description": "通过长token刷新短token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "刷新短token",
+                "responses": {
+                    "200": {
+                        "description": "Success",
                         "schema": {
                             "$ref": "#/definitions/ginx.Result"
                         }
@@ -74,6 +221,58 @@ const docTemplate = `{
                 },
                 "student_id": {
                     "description": "学号",
+                    "type": "string"
+                }
+            }
+        },
+        "web.UserEditReq": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.UserProfileVo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "ctime": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "new": {
+                    "description": "是否为新用户，新用户尚未编辑过个人信息",
+                    "type": "boolean"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "studentId": {
+                    "type": "string"
+                },
+                "utime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "web.UserPublicProfileVo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nickname": {
                     "type": "string"
                 }
             }
