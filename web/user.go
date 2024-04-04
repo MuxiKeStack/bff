@@ -6,6 +6,7 @@ import (
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type UserHandler struct {
@@ -20,6 +21,7 @@ func NewUserHandler(hdl ijwt.Handler, svc userv1.UserServiceClient) *UserHandler
 func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 	ug := s.Group("/users")
 	ug.POST("/login_ccnu", ginx.WrapReq(h.LoginByCCNU))
+	ug.POST("/logout", h.Logout)
 }
 
 // @Summary ccnu登录
@@ -42,12 +44,10 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 			return ginx.Result{
 				Code: errs.UserInternalServerError,
 				Msg:  "系统异常",
-				Data: nil,
 			}, err
 		}
 		return ginx.Result{
-			Msg:  "登录成功",
-			Data: nil,
+			Msg: "Success",
 		}, nil
 	}
 	switch {
@@ -55,13 +55,25 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 		return ginx.Result{
 			Code: errs.UserInvalidSidOrPassword,
 			Msg:  "学号或密码错误",
-			Data: nil,
 		}, err
 	default:
 		return ginx.Result{
 			Code: errs.UserInternalServerError,
 			Msg:  "系统异常",
-			Data: nil,
 		}, err
 	}
+}
+
+func (h *UserHandler) Logout(ctx *gin.Context) {
+	err := h.ClearToken(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusOK, ginx.Result{
+			Code: errs.UserInternalServerError,
+			Msg:  "系统异常",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, ginx.Result{
+		Msg: "Success",
+	})
 }
