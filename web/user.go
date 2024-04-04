@@ -6,6 +6,7 @@ import (
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 )
 
@@ -22,6 +23,7 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 	ug := s.Group("/users")
 	ug.POST("/login_ccnu", ginx.WrapReq(h.LoginByCCNU))
 	ug.POST("/logout", h.Logout)
+	ug.GET("/refresh_token", h.RefreshToken)
 }
 
 // @Summary ccnu登录
@@ -66,6 +68,39 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 
 func (h *UserHandler) Logout(ctx *gin.Context) {
 	err := h.ClearToken(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusOK, ginx.Result{
+			Code: errs.UserInternalServerError,
+			Msg:  "系统异常",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, ginx.Result{
+		Msg: "Success",
+	})
+}
+
+func (h *UserHandler) RefreshToken(ctx *gin.Context) {
+	tokenStr := h.ExtractToken(ctx)
+	rc := &ijwt.RefreshClaims{}
+	token, err := jwt.ParseWithClaims(tokenStr, rc, func(*jwt.Token) (interface{}, error) {
+		// 可以根据具体情况给出不同的key
+		return h.RCJWTKey(), nil
+	})
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+	if token == nil || !token.Valid {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+	ok, err := h.CheckSession(ctx, rc.Ssid)
+	if err != nil || ok {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+	err = h.SetJWTToken(ctx, rc.Uid, rc.Ssid, rc.UserAgent)
 	if err != nil {
 		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: errs.UserInternalServerError,
