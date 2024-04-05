@@ -1,6 +1,7 @@
 package web
 
 import (
+	ccnuv1 "github.com/MuxiKeStack/be-api/gen/proto/ccnu/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
@@ -13,11 +14,12 @@ import (
 
 type UserHandler struct {
 	ijwt.Handler
-	svc userv1.UserServiceClient
+	userSvc userv1.UserServiceClient
+	ccnuSvc ccnuv1.CCNUServiceClient
 }
 
 func NewUserHandler(hdl ijwt.Handler, svc userv1.UserServiceClient) *UserHandler {
-	return &UserHandler{Handler: hdl, svc: svc}
+	return &UserHandler{Handler: hdl, userSvc: svc}
 }
 
 func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
@@ -39,35 +41,40 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 // @Success 200 {object} ginx.Result "Success"
 // @Router /users/login_ccnu [post]
 func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Result, error) {
-	resp, err := h.svc.LoginByCCNU(ctx, &userv1.LoginByCCNURequest{
+	res, err := h.ccnuSvc.Login(ctx, &ccnuv1.LoginRequest{
 		StudentId: req.StudentId,
 		Password:  req.Password,
 	})
-
-	if err == nil {
-		err := h.SetLoginToken(ctx, resp.User.Id, req.StudentId, req.Password)
-		if err != nil {
-			return ginx.Result{
-				Code: errs.UserInternalServerError,
-				Msg:  "系统异常",
-			}, err
-		}
+	if err != nil {
 		return ginx.Result{
-			Msg: "Success",
-		}, nil
-	}
-	switch {
-	case userv1.IsInvalidSidOrPwd(err):
-		return ginx.Result{
-			Code: errs.UserInvalidSidOrPassword,
-			Msg:  "学号或密码错误",
-		}, err
-	default:
-		return ginx.Result{
-			Code: errs.UserInternalServerError,
+			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
+	if !res.Success {
+		return ginx.Result{
+			Code: errs.UserInvalidSidOrPassword,
+			Msg:  "学号或密码错误",
+		}, nil
+	}
+	// FindOrCreate
+	resp, err := h.userSvc.FindOrCreateByStudentId(ctx, &userv1.FindOrCreateByStudentIdRequest{StudentId: req.StudentId})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	err = h.SetLoginToken(ctx, resp.User.Id, req.StudentId, req.Password)
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+	}, nil
 }
 
 // @Summary 登出(销毁token)
@@ -81,7 +88,7 @@ func (h *UserHandler) Logout(ctx *gin.Context) (ginx.Result, error) {
 	err := h.ClearToken(ctx)
 	if err != nil {
 		return ginx.Result{
-			Code: errs.UserInternalServerError,
+			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
@@ -126,7 +133,7 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 	})
 	if err != nil {
 		ctx.JSON(http.StatusOK, ginx.Result{
-			Code: errs.UserInternalServerError,
+			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		})
 		return
@@ -145,14 +152,14 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 // @Success 200 {object} ginx.Result "Success"
 // @Router /users/edit [post]
 func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims) (ginx.Result, error) {
-	_, err := h.svc.UpdateNonSensitiveInfo(ctx, &userv1.UpdateNonSensitiveInfoRequest{
+	_, err := h.userSvc.UpdateNonSensitiveInfo(ctx, &userv1.UpdateNonSensitiveInfoRequest{
 		Uid:      uc.Uid,
 		Avatar:   req.Avatar,
 		Nickname: req.Nickname,
 	})
 	if err != nil {
 		return ginx.Result{
-			Code: errs.UserInternalServerError,
+			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
@@ -169,10 +176,10 @@ func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims
 // @Success 200 {object} ginx.Result{data=UserProfileVo} "Success"
 // @Router /users/profile [get]
 func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
-	res, err := h.svc.Profile(ctx, &userv1.ProfileRequest{Uid: uc.Uid})
+	res, err := h.userSvc.Profile(ctx, &userv1.ProfileRequest{Uid: uc.Uid})
 	if err != nil {
 		return ginx.Result{
-			Code: errs.UserInternalServerError,
+			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
@@ -206,10 +213,10 @@ func (h *UserHandler) ProfileById(ctx *gin.Context) (ginx.Result, error) {
 			Msg:  "无效的输入参数",
 		}, err
 	}
-	res, err := h.svc.Profile(ctx, &userv1.ProfileRequest{Uid: uid})
+	res, err := h.userSvc.Profile(ctx, &userv1.ProfileRequest{Uid: uid})
 	if err != nil {
 		return ginx.Result{
-			Code: errs.UserInternalServerError,
+			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
