@@ -45,15 +45,16 @@ func (h *CourseHandler) List(ctx *gin.Context, req CourseListReq, uc ijwt.UserCl
 		})
 		// 这里要去聚合课评服务
 		var eg errgroup.Group
-		for _, c := range courseVos {
+		// 基于go1.22的新特性，这里的迭代变量i没有在内层重新copy
+		for i := range courseVos {
 			eg.Go(func() error {
 				res, er := h.evaluation.Evaluated(ctx, &evaluationv1.EvaluatedRequest{
 					StudentId: uc.StudentId,
-					CourseId:  c.CourseId,
-					Name:      c.Name,
-					Teacher:   c.Teacher,
+					CourseId:  courseVos[i].CourseId,
+					Name:      courseVos[i].Name,
+					Teacher:   courseVos[i].Teacher,
 				})
-				c.Evaluated = res.Evaluated
+				courseVos[i].Evaluated = res.Evaluated
 				return er
 			})
 		}
@@ -69,7 +70,7 @@ func (h *CourseHandler) List(ctx *gin.Context, req CourseListReq, uc ijwt.UserCl
 			Data: courseVos,
 		}, nil
 	}
-	// 这里可能有的错误 1.登录失败 2.网络或ccnu服务崩溃而降级
+
 	switch {
 	case ccnuv1.IsInvalidSidOrPwd(err):
 		// 学号密码错误，登出
