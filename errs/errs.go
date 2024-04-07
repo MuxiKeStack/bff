@@ -10,6 +10,10 @@ const (
 )
 
 const (
+	CourseInvalidInput = 402001
+)
+
+const (
 	// InternalServerError 一个非常含糊的错误码。代表系统内部错误
 	InternalServerError = 500001
 )
