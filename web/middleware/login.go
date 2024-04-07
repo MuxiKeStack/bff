@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/MuxiKeStack/bff/web/ijwt"
-	"github.com/ecodeclub/ekit/set"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
@@ -10,31 +9,17 @@ import (
 )
 
 type LoginMiddlewareBuilder struct {
-	publicPaths set.Set[string]
 	ijwt.Handler
 }
 
 func NewLoginMiddleWareBuilder(hdl ijwt.Handler) *LoginMiddlewareBuilder {
-	s := set.NewMapSet[string](3)
-	s.Add("/users/login_ccnu")
-	s.Add("/users/refresh_token")
 	return &LoginMiddlewareBuilder{
-		publicPaths: s,
-		Handler:     hdl,
+		Handler: hdl,
 	}
-}
-
-func (m *LoginMiddlewareBuilder) isPublic(path string) bool {
-	return m.publicPaths.Exist(path) ||
-		strings.HasSuffix(strings.TrimPrefix(path, "/users/"), "/profile")
 }
 
 func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if m.isPublic(ctx.Request.URL.Path) {
-			return
-		}
-		// 改为jwt鉴权
 		authCode := ctx.GetHeader("Authorization")
 		// 没token
 		if authCode == "" {

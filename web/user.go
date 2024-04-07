@@ -22,13 +22,13 @@ func NewUserHandler(hdl ijwt.Handler, svc userv1.UserServiceClient) *UserHandler
 	return &UserHandler{Handler: hdl, userSvc: svc}
 }
 
-func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
+func (h *UserHandler) RegisterRoutes(s *gin.Engine, AuthMiddleware gin.HandlerFunc) {
 	ug := s.Group("/users")
 	ug.POST("/login_ccnu", ginx.WrapReq(h.LoginByCCNU))
-	ug.POST("/logout", ginx.Wrap(h.Logout))
+	ug.POST("/logout", AuthMiddleware, ginx.Wrap(h.Logout))
 	ug.GET("/refresh_token", h.RefreshToken)
-	ug.POST("/edit", ginx.WrapClaimsAndReq(h.Edit))
-	ug.GET("/profile", ginx.WrapClaims(h.Profile))
+	ug.POST("/edit", AuthMiddleware, ginx.WrapClaimsAndReq(h.Edit))
+	ug.GET("/profile", AuthMiddleware, ginx.WrapClaims(h.Profile))
 	ug.GET("/:userId/profile", ginx.Wrap(h.ProfileById))
 }
 
@@ -41,7 +41,7 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine) {
 // @Success 200 {object} ginx.Result "Success"
 // @Router /users/login_ccnu [post]
 func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Result, error) {
-	res, err := h.ccnuSvc.Login(ctx, &ccnuv1.LoginRequest{
+	lgRes, err := h.ccnuSvc.Login(ctx, &ccnuv1.LoginRequest{
 		StudentId: req.StudentId,
 		Password:  req.Password,
 	})
@@ -51,21 +51,21 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 			Msg:  "系统异常",
 		}, err
 	}
-	if !res.Success {
+	if !lgRes.GetSuccess() {
 		return ginx.Result{
 			Code: errs.UserInvalidSidOrPassword,
 			Msg:  "学号或密码错误",
 		}, nil
 	}
 	// FindOrCreate
-	resp, err := h.userSvc.FindOrCreateByStudentId(ctx, &userv1.FindOrCreateByStudentIdRequest{StudentId: req.StudentId})
+	fcRes, err := h.userSvc.FindOrCreateByStudentId(ctx, &userv1.FindOrCreateByStudentIdRequest{StudentId: req.StudentId})
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
-	err = h.SetLoginToken(ctx, resp.User.Id, req.StudentId, req.Password)
+	err = h.SetLoginToken(ctx, fcRes.GetUser().GetId(), req.StudentId, req.Password)
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,
@@ -186,13 +186,13 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 	return ginx.Result{
 		Msg: "Success",
 		Data: UserProfileVo{
-			Id:        res.User.Id,
-			StudentId: res.User.StudentId,
-			Avatar:    res.User.Avatar,
-			Nickname:  res.User.Nickname,
-			New:       res.User.New,
-			Utime:     res.User.Utime,
-			Ctime:     res.User.Ctime,
+			Id:        res.GetUser().GetId(),
+			StudentId: res.GetUser().GetStudentId(),
+			Avatar:    res.GetUser().GetAvatar(),
+			Nickname:  res.GetUser().GetNickname(),
+			New:       res.GetUser().GetNew(),
+			Utime:     res.GetUser().GetUtime(),
+			Ctime:     res.GetUser().GetCtime(),
 		},
 	}, nil
 }
@@ -223,9 +223,9 @@ func (h *UserHandler) ProfileById(ctx *gin.Context) (ginx.Result, error) {
 	return ginx.Result{
 		Msg: "Success",
 		Data: UserPublicProfileVo{
-			Id:       res.User.Id,
-			Avatar:   res.User.Avatar,
-			Nickname: res.User.Nickname,
+			Id:       res.GetUser().GetId(),
+			Avatar:   res.GetUser().GetAvatar(),
+			Nickname: res.GetUser().GetNickname(),
 		},
 	}, nil
 }
