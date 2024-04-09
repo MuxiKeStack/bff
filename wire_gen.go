@@ -20,7 +20,11 @@ func InitWebServer() *ginx.Server {
 	handler := ioc.InitJwtHandler(cmdable)
 	client := ioc.InitEtcdClient()
 	userServiceClient := ioc.InitUserClient(client)
-	userHandler := web.NewUserHandler(handler, userServiceClient)
-	server := ioc.InitGinServer(logger, handler, userHandler)
+	ccnuServiceClient := ioc.InitCCNUClient(client)
+	userHandler := web.NewUserHandler(handler, userServiceClient, ccnuServiceClient)
+	courseServiceClient := ioc.InitCourseClient(client)
+	evaluationServiceClient := ioc.InitEvaluationClient(client)
+	courseHandler := web.NewCourseHandler(handler, courseServiceClient, evaluationServiceClient)
+	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler)
 	return server
 }
