@@ -18,17 +18,21 @@ type UserHandler struct {
 	ccnuSvc ccnuv1.CCNUServiceClient
 }
 
-func NewUserHandler(hdl ijwt.Handler, svc userv1.UserServiceClient) *UserHandler {
-	return &UserHandler{Handler: hdl, userSvc: svc}
+func NewUserHandler(hdl ijwt.Handler, userSvc userv1.UserServiceClient, ccnuSvc ccnuv1.CCNUServiceClient) *UserHandler {
+	return &UserHandler{
+		Handler: hdl,
+		userSvc: userSvc,
+		ccnuSvc: ccnuSvc,
+	}
 }
 
-func (h *UserHandler) RegisterRoutes(s *gin.Engine, AuthMiddleware gin.HandlerFunc) {
+func (h *UserHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	ug := s.Group("/users")
 	ug.POST("/login_ccnu", ginx.WrapReq(h.LoginByCCNU))
-	ug.POST("/logout", AuthMiddleware, ginx.Wrap(h.Logout))
+	ug.POST("/logout", authMiddleware, ginx.Wrap(h.Logout))
 	ug.GET("/refresh_token", h.RefreshToken)
-	ug.POST("/edit", AuthMiddleware, ginx.WrapClaimsAndReq(h.Edit))
-	ug.GET("/profile", AuthMiddleware, ginx.WrapClaims(h.Profile))
+	ug.POST("/edit", authMiddleware, ginx.WrapClaimsAndReq(h.Edit))
+	ug.GET("/profile", authMiddleware, ginx.WrapClaims(h.Profile))
 	ug.GET("/:userId/profile", ginx.Wrap(h.ProfileById))
 }
 
@@ -41,21 +45,23 @@ func (h *UserHandler) RegisterRoutes(s *gin.Engine, AuthMiddleware gin.HandlerFu
 // @Success 200 {object} ginx.Result "Success"
 // @Router /users/login_ccnu [post]
 func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Result, error) {
-	lgRes, err := h.ccnuSvc.Login(ctx, &ccnuv1.LoginRequest{
+	_, err := h.ccnuSvc.Login(ctx, &ccnuv1.LoginRequest{
 		StudentId: req.StudentId,
 		Password:  req.Password,
 	})
-	if err != nil {
-		return ginx.Result{
-			Code: errs.InternalServerError,
-			Msg:  "系统异常",
-		}, err
-	}
-	if !lgRes.GetSuccess() {
+	switch {
+	case err == nil:
+	// 直接向下执行
+	case ccnuv1.IsInvalidSidOrPwd(err):
 		return ginx.Result{
 			Code: errs.UserInvalidSidOrPassword,
 			Msg:  "学号或密码错误",
 		}, nil
+	default:
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
 	}
 	// FindOrCreate
 	fcRes, err := h.userSvc.FindOrCreateByStudentId(ctx, &userv1.FindOrCreateByStudentIdRequest{StudentId: req.StudentId})

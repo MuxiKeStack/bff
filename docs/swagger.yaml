@@ -9,6 +9,19 @@ definitions:
         description: 错误或成功 描述
         type: string
     type: object
+  web.GradeVo:
+    properties:
+      final:
+        type: number
+      regular:
+        type: number
+      term:
+        type: string
+      total:
+        type: number
+      year:
+        type: string
+    type: object
   web.LoginByCCNUReq:
     properties:
       password:
@@ -16,6 +29,38 @@ definitions:
         type: string
       student_id:
         description: 学号
+        type: string
+    type: object
+  web.ProfileCourseVo:
+    properties:
+      evaluated:
+        type: boolean
+      id:
+        type: integer
+      name:
+        type: string
+      teacher:
+        type: string
+      term:
+        description: 学年，1/2/3
+        type: string
+      year:
+        description: 学期，2018
+        type: string
+    type: object
+  web.PublicCourseVo:
+    properties:
+      credit:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      school:
+        type: string
+      teacher:
+        type: string
+      type:
         type: string
     type: object
   web.UserEditReq:
@@ -55,6 +100,87 @@ definitions:
 info:
   contact: {}
 paths:
+  /courses/{courseId}/detail:
+    get:
+      consumes:
+      - application/json
+      description: 根据课程ID获取课程详情信息
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.PublicCourseVo'
+              type: object
+      summary: 获取课程详情
+      tags:
+      - 课程
+  /courses/{courseId}/grades:
+    get:
+      consumes:
+      - application/json
+      description: 根据课程ID获取课程的成绩信息
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.GradeVo'
+              type: object
+      summary: 获取课程成绩
+      tags:
+      - 课程
+  /courses/list:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户的课程列表
+      parameters:
+      - description: 年份，格式为YYYY
+        in: query
+        name: year
+        type: string
+      - description: 学期，如1、2、3
+        in: query
+        name: term
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.ProfileCourseVo'
+              type: object
+      summary: 我的课程列表
+      tags:
+      - 课程
   /users/:userId/profile:
     get:
       consumes:

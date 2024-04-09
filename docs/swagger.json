@@ -4,6 +4,143 @@
         "contact": {}
     },
     "paths": {
+        "/courses/list": {
+            "get": {
+                "description": "获取用户的课程列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "我的课程列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "年份，格式为YYYY",
+                        "name": "year",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "学期，如1、2、3",
+                        "name": "term",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.ProfileCourseVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/{courseId}/detail": {
+            "get": {
+                "description": "根据课程ID获取课程详情信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "获取课程详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.PublicCourseVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/{courseId}/grades": {
+            "get": {
+                "description": "根据课程ID获取课程的成绩信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "获取课程成绩",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.GradeVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/users/:userId/profile": {
             "get": {
                 "consumes": [
@@ -201,6 +338,26 @@
                 }
             }
         },
+        "web.GradeVo": {
+            "type": "object",
+            "properties": {
+                "final": {
+                    "type": "number"
+                },
+                "regular": {
+                    "type": "number"
+                },
+                "term": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "number"
+                },
+                "year": {
+                    "type": "string"
+                }
+            }
+        },
         "web.LoginByCCNUReq": {
             "type": "object",
             "properties": {
@@ -210,6 +367,54 @@
                 },
                 "student_id": {
                     "description": "学号",
+                    "type": "string"
+                }
+            }
+        },
+        "web.ProfileCourseVo": {
+            "type": "object",
+            "properties": {
+                "evaluated": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "teacher": {
+                    "type": "string"
+                },
+                "term": {
+                    "description": "学年，1/2/3",
+                    "type": "string"
+                },
+                "year": {
+                    "description": "学期，2018",
+                    "type": "string"
+                }
+            }
+        },
+        "web.PublicCourseVo": {
+            "type": "object",
+            "properties": {
+                "credit": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "school": {
+                    "type": "string"
+                },
+                "teacher": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }
