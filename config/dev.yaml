@@ -10,8 +10,17 @@ etcd:
 
 grpc:
   client:
+    ccnu:
+      endpoint: "discovery:///ccnu"
+      retryCnt: 3    # 具备重试装饰时的重试次数
     user:
       endpoint: "discovery:///user"
+    course:
+      endpoint: "discovery:///course"
+    evaluation:
+      endpoint: "discovery:///evaluation"
+
+
 
 jwt:
   jwtKey: "mc8QAegcrdOmGwQthrx3cgd2hd8CVfaH"
