@@ -19,21 +19,36 @@ type CourseHandler struct {
 	evaluation evaluationv1.EvaluationServiceClient
 }
 
-func (h *CourseHandler) RegisterRoutes(s *gin.Engine, AuthMiddleware gin.HandlerFunc) {
-	cg := s.Group("/course")
-	cg.GET("/list", AuthMiddleware, ginx.WrapClaimsAndReq(h.List))
+func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient, evaluation evaluationv1.EvaluationServiceClient) *CourseHandler {
+	return &CourseHandler{Handler: handler, course: course, evaluation: evaluation}
+}
+
+func (h *CourseHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
+	cg := s.Group("/courses")
+	cg.GET("/list", authMiddleware, ginx.WrapClaims(h.List))
 	cg.GET("/:courseId/detail", ginx.Wrap(h.Detail))
 	cg.GET("/:courseId/grades", ginx.Wrap(h.Grades))
 }
 
-func (h *CourseHandler) List(ctx *gin.Context, req CourseListReq, uc ijwt.UserClaims) (ginx.Result, error) {
+// @Summary 我的课程列表
+// @Description 获取用户的课程列表
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Param year query string false "年份，格式为YYYY"
+// @Param term query string false "学期，如1、2、3"
+// @Success 200 {object} ginx.Result{data=ProfileCourseVo} "Success"
+// @Router /courses/list [get]
+func (h *CourseHandler) List(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
+	year := ctx.Query("year")
+	term := ctx.Query("term")
 	// 查询course
 	res, err := h.course.List(ctx, &coursev1.ListRequest{
 		Uid:       uc.Uid,
 		StudentId: uc.StudentId,
 		Password:  uc.Password,
-		Year:      req.Year,
-		Term:      req.Term,
+		Year:      year,
+		Term:      term,
 	})
 	// from ccnu or 降级成功
 	if err == nil || ccnuv1.IsNetworkToXkError(err) {
@@ -42,6 +57,8 @@ func (h *CourseHandler) List(ctx *gin.Context, req CourseListReq, uc ijwt.UserCl
 				Id:      src.GetId(),
 				Name:    src.GetName(),
 				Teacher: src.GetTeacher(),
+				Year:    year,
+				Term:    term,
 			}
 		})
 		// 这里要去聚合课评服务
@@ -92,6 +109,14 @@ func (h *CourseHandler) List(ctx *gin.Context, req CourseListReq, uc ijwt.UserCl
 	}
 }
 
+// @Summary 获取课程详情
+// @Description 根据课程ID获取课程详情信息
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Param courseId path string true "课程ID"
+// @Success 200 {object} ginx.Result{data=PublicCourseVo} "Success"
+// @Router /courses/{courseId}/detail [get]
 func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 	idStr := ctx.Param("courseId")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -124,6 +149,14 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 	}, nil
 }
 
+// @Summary 获取课程成绩
+// @Description 根据课程ID获取课程的成绩信息
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Param courseId path string true "课程ID"
+// @Success 200 {object} ginx.Result{data=GradeVo} "Success"
+// @Router /courses/{courseId}/grades [get]
 func (h *CourseHandler) Grades(ctx *gin.Context) (ginx.Result, error) {
 	idStr := ctx.Param("courseId")
 	id, err := strconv.ParseInt(idStr, 10, 64)
