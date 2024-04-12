@@ -157,6 +157,8 @@ func (h *QuestionHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 			Biz:          res.GetQuestion().GetBiz().String(),
 			BizId:        res.GetQuestion().GetBizId(),
 			Content:      res.GetQuestion().GetContent(),
+			Utime:        res.GetQuestion().GetUtime(),
+			Ctime:        res.GetQuestion().GetCtime(),
 		},
 	}, nil
 }

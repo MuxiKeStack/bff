@@ -2,7 +2,7 @@ package web
 
 type QuestionPublishReq struct {
 	Content string `json:"content"`
-	Biz     string `json:"biz"`    // 平台资源类型，如course
+	Biz     string `json:"biz"`    // 平台资源类型，如Course
 	BizId   int64  `json:"biz_id"` // id
 }
 
@@ -23,4 +23,6 @@ type QuestionVo struct {
 	Biz          string `json:"biz"`           // 具体针对那种业务的提问，如 Course
 	BizId        int64  `json:"biz_id"`        //
 	Content      string `json:"content"`
+	Utime        int64  `json:"utime"`
+	Ctime        int64  `json:"ctime"`
 }
