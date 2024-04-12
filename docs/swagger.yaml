@@ -9,7 +9,7 @@ definitions:
         description: 错误或成功 描述
         type: string
     type: object
-  web.GradeVo:
+  web.Grade:
     properties:
       final:
         type: number
@@ -21,6 +21,22 @@ definitions:
         type: number
       year:
         type: string
+    type: object
+  web.InviteUserToAnswerReq:
+    properties:
+      invitees:
+        items:
+          type: integer
+        type: array
+    type: object
+  web.InviteesVo:
+    properties:
+      avatar:
+        type: string
+      nickname:
+        type: string
+      uid:
+        type: integer
     type: object
   web.LoginByCCNUReq:
     properties:
@@ -52,6 +68,10 @@ definitions:
     properties:
       credit:
         type: number
+      grades:
+        items:
+          $ref: '#/definitions/web.Grade'
+        type: array
       id:
         type: integer
       name:
@@ -62,6 +82,32 @@ definitions:
         type: string
       type:
         type: string
+    type: object
+  web.QuestionPublishReq:
+    properties:
+      biz:
+        description: 平台资源类型，如course
+        type: string
+      biz_id:
+        description: id
+        type: integer
+      content:
+        type: string
+    type: object
+  web.QuestionVo:
+    properties:
+      biz:
+        description: 具体针对那种业务的提问，如 Course
+        type: string
+      biz_id:
+        type: integer
+      content:
+        type: string
+      id:
+        type: integer
+      questioner_id:
+        description: 提问者用户id
+        type: integer
     type: object
   web.UserEditReq:
     properties:
@@ -104,13 +150,13 @@ paths:
     get:
       consumes:
       - application/json
-      description: 根据课程ID获取课程详情信息
+      description: 根据课程ID获取课程详情信息,包括成绩
       parameters:
       - description: 课程ID
         in: path
         name: courseId
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -126,33 +172,7 @@ paths:
       summary: 获取课程详情
       tags:
       - 课程
-  /courses/{courseId}/grades:
-    get:
-      consumes:
-      - application/json
-      description: 根据课程ID获取课程的成绩信息
-      parameters:
-      - description: 课程ID
-        in: path
-        name: courseId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success
-          schema:
-            allOf:
-            - $ref: '#/definitions/ginx.Result'
-            - properties:
-                data:
-                  $ref: '#/definitions/web.GradeVo'
-              type: object
-      summary: 获取课程成绩
-      tags:
-      - 课程
-  /courses/list:
+  /courses/profile/list:
     get:
       consumes:
       - application/json
@@ -176,11 +196,132 @@ paths:
             - $ref: '#/definitions/ginx.Result'
             - properties:
                 data:
-                  $ref: '#/definitions/web.ProfileCourseVo'
+                  items:
+                    $ref: '#/definitions/web.ProfileCourseVo'
+                  type: array
               type: object
       summary: 我的课程列表
       tags:
       - 课程
+  /questions/{questionId}/detail:
+    get:
+      consumes:
+      - application/json
+      description: 通过问题ID检索特定问题的详情。
+      parameters:
+      - description: 问题ID
+        in: path
+        name: questionId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.QuestionVo'
+              type: object
+      summary: 获取问题详情
+      tags:
+      - 问题
+  /questions/{questionId}/invitees:
+    post:
+      consumes:
+      - application/json
+      description: 邀请一个或多个用户回答特定问题。
+      parameters:
+      - description: 问题ID
+        in: path
+        name: questionId
+        required: true
+        type: integer
+      - description: 邀请回答问题请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.InviteUserToAnswerReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 邀请回答问题
+      tags:
+      - 问题
+  /questions/{questionId}/recommendation_invitees:
+    get:
+      consumes:
+      - application/json
+      description: 为特定问题检索推荐的邀请人列表。
+      parameters:
+      - description: 问题ID
+        in: path
+        name: questionId
+        required: true
+        type: integer
+      - default: 10
+        description: 邀请人数限制
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - default: 0
+        description: 当前id，游标的感觉
+        in: query
+        name: cur_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.InviteesVo'
+                  type: array
+              type: object
+      summary: 获取推荐邀请人
+      tags:
+      - 问题
+  /questions/publish:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 发布问题请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.QuestionPublishReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      summary: 发布新问题
+      tags:
+      - 问题
   /users/:userId/profile:
     get:
       consumes:

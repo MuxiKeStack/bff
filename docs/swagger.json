@@ -4,7 +4,7 @@
         "contact": {}
     },
     "paths": {
-        "/courses/list": {
+        "/courses/profile/list": {
             "get": {
                 "description": "获取用户的课程列表",
                 "consumes": [
@@ -43,7 +43,10 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/web.ProfileCourseVo"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.ProfileCourseVo"
+                                            }
                                         }
                                     }
                                 }
@@ -55,7 +58,7 @@
         },
         "/courses/{courseId}/detail": {
             "get": {
-                "description": "根据课程ID获取课程详情信息",
+                "description": "根据课程ID获取课程详情信息,包括成绩",
                 "consumes": [
                     "application/json"
                 ],
@@ -68,7 +71,7 @@
                 "summary": "获取课程详情",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "课程ID",
                         "name": "courseId",
                         "in": "path",
@@ -97,9 +100,8 @@
                 }
             }
         },
-        "/courses/{courseId}/grades": {
-            "get": {
-                "description": "根据课程ID获取课程的成绩信息",
+        "/questions/publish": {
+            "post": {
                 "consumes": [
                     "application/json"
                 ],
@@ -107,14 +109,60 @@
                     "application/json"
                 ],
                 "tags": [
-                    "课程"
+                    "问题"
                 ],
-                "summary": "获取课程成绩",
+                "summary": "发布新问题",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "课程ID",
-                        "name": "courseId",
+                        "description": "发布问题请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.QuestionPublishReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/questions/{questionId}/detail": {
+            "get": {
+                "description": "通过问题ID检索特定问题的详情。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "问题"
+                ],
+                "summary": "获取问题详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "问题ID",
+                        "name": "questionId",
                         "in": "path",
                         "required": true
                     }
@@ -131,7 +179,111 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/web.GradeVo"
+                                            "$ref": "#/definitions/web.QuestionVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/questions/{questionId}/invitees": {
+            "post": {
+                "description": "邀请一个或多个用户回答特定问题。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "问题"
+                ],
+                "summary": "邀请回答问题",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "问题ID",
+                        "name": "questionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "邀请回答问题请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.InviteUserToAnswerReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/questions/{questionId}/recommendation_invitees": {
+            "get": {
+                "description": "为特定问题检索推荐的邀请人列表。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "问题"
+                ],
+                "summary": "获取推荐邀请人",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "问题ID",
+                        "name": "questionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "邀请人数限制",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "当前id，游标的感觉",
+                        "name": "cur_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.InviteesVo"
+                                            }
                                         }
                                     }
                                 }
@@ -338,7 +490,7 @@
                 }
             }
         },
-        "web.GradeVo": {
+        "web.Grade": {
             "type": "object",
             "properties": {
                 "final": {
@@ -355,6 +507,31 @@
                 },
                 "year": {
                     "type": "string"
+                }
+            }
+        },
+        "web.InviteUserToAnswerReq": {
+            "type": "object",
+            "properties": {
+                "invitees": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "web.InviteesVo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "integer"
                 }
             }
         },
@@ -402,6 +579,12 @@
                 "credit": {
                     "type": "number"
                 },
+                "grades": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Grade"
+                    }
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -416,6 +599,44 @@
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "web.QuestionPublishReq": {
+            "type": "object",
+            "properties": {
+                "biz": {
+                    "description": "平台资源类型，如course",
+                    "type": "string"
+                },
+                "biz_id": {
+                    "description": "id",
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.QuestionVo": {
+            "type": "object",
+            "properties": {
+                "biz": {
+                    "description": "具体针对那种业务的提问，如 Course",
+                    "type": "string"
+                },
+                "biz_id": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "questioner_id": {
+                    "description": "提问者用户id",
+                    "type": "integer"
                 }
             }
         },
