@@ -71,8 +71,8 @@ func (h *CourseHandler) List(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result,
 		for i := range courseVos {
 			eg.Go(func() error {
 				res, er := h.evaluation.Evaluated(ctx, &evaluationv1.EvaluatedRequest{
-					CourseId: courseVos[i].Id,
-					UserId:   uc.Uid,
+					CourseId:    courseVos[i].Id,
+					PublisherId: uc.Uid,
 				})
 				courseVos[i].Evaluated = res.GetEvaluated()
 				return er
