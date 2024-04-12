@@ -159,9 +159,11 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 // @Router /users/edit [post]
 func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	_, err := h.userSvc.UpdateNonSensitiveInfo(ctx, &userv1.UpdateNonSensitiveInfoRequest{
-		Uid:      uc.Uid,
-		Avatar:   req.Avatar,
-		Nickname: req.Nickname,
+		User: &userv1.User{
+			Id:       uc.Uid,
+			Avatar:   req.Avatar,
+			Nickname: req.Nickname,
+		},
 	})
 	if err != nil {
 		return ginx.Result{

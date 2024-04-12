@@ -12,11 +12,12 @@ import (
 func InitWebServer() *ginx.Server {
 	wire.Build(
 		ioc.InitGinServer,
-		web.NewUserHandler, web.NewCourseHandler, ioc.InitJwtHandler,
+		web.NewUserHandler, web.NewCourseHandler, ioc.InitJwtHandler, web.NewQuestionHandler,
 		ioc.InitCCNUClient,
 		ioc.InitCourseClient,
 		ioc.InitEvaluationClient,
 		ioc.InitUserClient,
+		ioc.InitQuestionClient,
 		// 组件
 		ioc.InitEtcdClient,
 		ioc.InitLogger,
