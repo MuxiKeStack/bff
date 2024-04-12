@@ -1,5 +1,10 @@
 package errs
 
+const (
+	// InternalServerError 一个非常含糊的错误码。代表系统内部错误
+	InternalServerError = 500001
+)
+
 // User 部分，模块代码使用 01
 const (
 	// UserInvalidInput 一个非常含糊的错误码，代表用户相关的API参数不对
@@ -14,6 +19,5 @@ const (
 )
 
 const (
-	// InternalServerError 一个非常含糊的错误码。代表系统内部错误
-	InternalServerError = 500001
+	QuestionBizNotFound = 403001
 )

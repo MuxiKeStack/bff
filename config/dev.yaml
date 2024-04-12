@@ -19,7 +19,8 @@ grpc:
       endpoint: "discovery:///course"
     evaluation:
       endpoint: "discovery:///evaluation"
-
+    question:
+      endpoint: "discovery:///question"
 
 
 jwt:
