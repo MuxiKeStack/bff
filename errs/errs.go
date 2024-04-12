@@ -21,3 +21,7 @@ const (
 const (
 	QuestionBizNotFound = 403001
 )
+
+const (
+	EvaluationInvalidInput = 404001
+)
