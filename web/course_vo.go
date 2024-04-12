@@ -21,6 +21,15 @@ type PublicCourseVo struct {
 	School   string  `json:"school"`
 	Property string  `json:"type"`
 	Credit   float32 `json:"credit"`
+	Grades   []Grade `json:"grades"`
+}
+
+type Grade struct {
+	Regular float32 `json:"regular"`
+	Final   float32 `json:"final"`
+	Total   float32 `json:"total"`
+	Year    string  `json:"year"`
+	Term    string  `json:"term"`
 }
 
 type GradeVo struct {
@@ -29,4 +38,12 @@ type GradeVo struct {
 	Total   float32 `json:"total"`
 	Year    string  `json:"year"`
 	Term    string  `json:"term"`
+}
+
+type InviteUserToAnswerReq struct {
+	Invitees []int64 `json:"invitees"`
+}
+
+type CourseQuestionPublishReq struct {
+	Content string `json:"content"`
 }
