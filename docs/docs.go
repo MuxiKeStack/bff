@@ -111,6 +111,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/evaluation/publish": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "发布课评",
+                "parameters": [
+                    {
+                        "description": "发布课评请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.EvaluationPublishReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/questions/publish": {
             "post": {
                 "consumes": [
@@ -274,7 +319,7 @@ const docTemplate = `{
                         "type": "integer",
                         "default": 0,
                         "description": "当前id，游标的感觉",
-                        "name": "cur_id",
+                        "name": "cur_uid",
                         "in": "query",
                         "required": true
                     }
@@ -501,6 +546,40 @@ const docTemplate = `{
                 }
             }
         },
+        "web.EvaluationPublishReq": {
+            "type": "object",
+            "properties": {
+                "anonymous": {
+                    "description": "是否匿名提交",
+                    "type": "boolean"
+                },
+                "assessments": {
+                    "description": "考核方式，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "content": {
+                    "description": "评价的内容",
+                    "type": "string"
+                },
+                "course_id": {
+                    "type": "integer"
+                },
+                "features": {
+                    "description": "课程特点，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "star_rating": {
+                    "description": "1，2，3，4，5",
+                    "type": "integer"
+                }
+            }
+        },
         "web.Grade": {
             "type": "object",
             "properties": {
@@ -617,7 +696,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "biz": {
-                    "description": "平台资源类型，如course",
+                    "description": "平台资源类型，如Course",
                     "type": "string"
                 },
                 "biz_id": {
@@ -642,11 +721,17 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "ctime": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "questioner_id": {
                     "description": "提问者用户id",
+                    "type": "integer"
+                },
+                "utime": {
                     "type": "integer"
                 }
             }

@@ -9,6 +9,30 @@ definitions:
         description: 错误或成功 描述
         type: string
     type: object
+  web.EvaluationPublishReq:
+    properties:
+      anonymous:
+        description: 是否匿名提交
+        type: boolean
+      assessments:
+        description: 考核方式，支持多选
+        items:
+          type: string
+        type: array
+      content:
+        description: 评价的内容
+        type: string
+      course_id:
+        type: integer
+      features:
+        description: 课程特点，支持多选
+        items:
+          type: string
+        type: array
+      star_rating:
+        description: 1，2，3，4，5
+        type: integer
+    type: object
   web.Grade:
     properties:
       final:
@@ -86,7 +110,7 @@ definitions:
   web.QuestionPublishReq:
     properties:
       biz:
-        description: 平台资源类型，如course
+        description: 平台资源类型，如Course
         type: string
       biz_id:
         description: id
@@ -103,10 +127,14 @@ definitions:
         type: integer
       content:
         type: string
+      ctime:
+        type: integer
       id:
         type: integer
       questioner_id:
         description: 提问者用户id
+        type: integer
+      utime:
         type: integer
     type: object
   web.UserEditReq:
@@ -203,6 +231,32 @@ paths:
       summary: 我的课程列表
       tags:
       - 课程
+  /evaluation/publish:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 发布课评请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.EvaluationPublishReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      summary: 发布课评
+      tags:
+      - 课评
   /questions/{questionId}/detail:
     get:
       consumes:
@@ -276,7 +330,7 @@ paths:
       - default: 0
         description: 当前id，游标的感觉
         in: query
-        name: cur_id
+        name: cur_uid
         required: true
         type: integer
       produces:
