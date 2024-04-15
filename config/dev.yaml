@@ -21,6 +21,8 @@ grpc:
       endpoint: "discovery:///evaluation"
     question:
       endpoint: "discovery:///question"
+    tag:
+      endpoint: "discovery:///tag"
 
 
 jwt:
