@@ -13,6 +13,8 @@ func InitWebServer() *ginx.Server {
 	wire.Build(
 		ioc.InitGinServer,
 		web.NewUserHandler, web.NewCourseHandler, ioc.InitJwtHandler, web.NewQuestionHandler,
+		web.NewEvaluationHandler,
+		ioc.InitTagClient,
 		ioc.InitCCNUClient,
 		ioc.InitCourseClient,
 		ioc.InitEvaluationClient,
