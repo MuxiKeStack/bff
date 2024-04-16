@@ -30,7 +30,7 @@ func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
 
 func (h *CourseHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	cg := s.Group("/courses")
-	cg.GET("/profile/list", authMiddleware, ginx.WrapClaims(h.List))
+	cg.GET("/list/mine", authMiddleware, ginx.WrapClaims(h.List))
 	cg.GET("/:courseId/detail", ginx.Wrap(h.Detail))
 }
 
@@ -42,7 +42,7 @@ func (h *CourseHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handler
 // @Param year query string false "年份，格式为YYYY"
 // @Param term query string false "学期，如1、2、3"
 // @Success 200 {object} ginx.Result{data=[]ProfileCourseVo} "Success"
-// @Router /courses/profile/list [get]
+// @Router /courses/list/mine [get]
 func (h *CourseHandler) List(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
 	year := ctx.Query("year")
 	term := ctx.Query("term")
@@ -148,7 +148,7 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 			Name:     res.GetCourse().GetName(),
 			Teacher:  res.GetCourse().GetTeacher(),
 			School:   res.GetCourse().GetSchool(),
-			Property: res.GetCourse().GetProperty(),
+			Property: res.GetCourse().GetProperty().String(),
 			Credit:   res.GetCourse().GetCredit(),
 			Grades: slice.Map(res.GetCourse().GetGrades(), func(idx int, src *coursev1.Grade) Grade {
 				return Grade{
