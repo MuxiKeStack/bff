@@ -4,7 +4,7 @@
         "contact": {}
     },
     "paths": {
-        "/courses/profile/list": {
+        "/courses/list/mine": {
             "get": {
                 "description": "获取用户的课程列表",
                 "consumes": [
@@ -100,7 +100,327 @@
                 }
             }
         },
-        "/evaluation/publish": {
+        "/courses/{courseId}/tags": {
+            "get": {
+                "description": "包括课程特点和考核方式",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "获取课程标签",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.CourseTagsVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/count/courses/{courseId}/invisible": {
+            "get": {
+                "description": "根据课程ID计算该课程的不可见评价数量。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "不可见课评数",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/count/mine": {
+            "get": {
+                "description": "根据用户ID和课评状态分类统计用户的课评数量。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "用户课评数",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "课评状态",
+                        "name": "status",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/list/all": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "课评列表[广场]",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前ID",
+                        "name": "cur_evaluation_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "课评数量限制",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "用于过滤课评的课程性质（可选）",
+                        "name": "property",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.EvaluationVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/list/courses/{courseId}": {
+            "get": {
+                "description": "根据课程ID获取课程评价列表，支持分页。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "课评列表[指定课程]",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "当前课评ID",
+                        "name": "cur_evaluation_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "返回课评的最大数量，上限为100",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.EvaluationVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/list/mine": {
+            "get": {
+                "description": "根据课程ID获取课程评价列表，支持分页。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "课评列表[我的历史]",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "当前评估ID，用于分页",
+                        "name": "cur_evaluation_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "上限为100",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "课评状态: Public/Private/Folded",
+                        "name": "status",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.EvaluationVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/save": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -119,7 +439,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.EvaluationPublishReq"
+                            "$ref": "#/definitions/web.EvaluationSaveReq"
                         }
                     }
                 ],
@@ -140,6 +460,83 @@
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/{evaluationId}/detail": {
+            "get": {
+                "description": "根据课评ID获取详情，详情包括标签",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "课评详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课评ID",
+                        "name": "evaluationId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.EvaluationVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/{evaluationId}/status": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "变更课评状态",
+                "parameters": [
+                    {
+                        "description": "变更课评状态请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.EvaluationUpdateStatusReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
                         }
                     }
                 }
@@ -535,13 +932,27 @@
                 }
             }
         },
-        "web.EvaluationPublishReq": {
+        "web.CourseTagsVo": {
             "type": "object",
             "properties": {
-                "anonymous": {
-                    "description": "是否匿名提交",
-                    "type": "boolean"
+                "assessments": {
+                    "description": "标签:数量",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
                 },
+                "features": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "web.EvaluationSaveReq": {
+            "type": "object",
+            "properties": {
                 "assessments": {
                     "description": "考核方式，支持多选",
                     "type": "array",
@@ -563,8 +974,66 @@
                         "type": "string"
                     }
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "star_rating": {
                     "description": "1，2，3，4，5",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "可见性：Public/Private",
+                    "type": "string"
+                }
+            }
+        },
+        "web.EvaluationUpdateStatusReq": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.EvaluationVo": {
+            "type": "object",
+            "properties": {
+                "assessments": {
+                    "description": "考核方式，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "content": {
+                    "type": "string"
+                },
+                "course_id": {
+                    "type": "integer"
+                },
+                "ctime": {
+                    "type": "integer"
+                },
+                "features": {
+                    "description": "课程特点，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "publisher_id": {
+                    "type": "integer"
+                },
+                "star_rating": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "utime": {
                     "type": "integer"
                 }
             }

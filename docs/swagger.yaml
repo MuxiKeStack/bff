@@ -9,11 +9,20 @@ definitions:
         description: 错误或成功 描述
         type: string
     type: object
-  web.EvaluationPublishReq:
+  web.CourseTagsVo:
     properties:
-      anonymous:
-        description: 是否匿名提交
-        type: boolean
+      assessments:
+        additionalProperties:
+          type: integer
+        description: 标签:数量
+        type: object
+      features:
+        additionalProperties:
+          type: integer
+        type: object
+    type: object
+  web.EvaluationSaveReq:
+    properties:
       assessments:
         description: 考核方式，支持多选
         items:
@@ -29,8 +38,47 @@ definitions:
         items:
           type: string
         type: array
+      id:
+        type: integer
       star_rating:
         description: 1，2，3，4，5
+        type: integer
+      status:
+        description: 可见性：Public/Private
+        type: string
+    type: object
+  web.EvaluationUpdateStatusReq:
+    properties:
+      status:
+        type: string
+    type: object
+  web.EvaluationVo:
+    properties:
+      assessments:
+        description: 考核方式，支持多选
+        items:
+          type: string
+        type: array
+      content:
+        type: string
+      course_id:
+        type: integer
+      ctime:
+        type: integer
+      features:
+        description: 课程特点，支持多选
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      publisher_id:
+        type: integer
+      star_rating:
+        type: integer
+      status:
+        type: string
+      utime:
         type: integer
     type: object
   web.Grade:
@@ -200,7 +248,33 @@ paths:
       summary: 获取课程详情
       tags:
       - 课程
-  /courses/profile/list:
+  /courses/{courseId}/tags:
+    get:
+      consumes:
+      - application/json
+      description: 包括课程特点和考核方式
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.CourseTagsVo'
+              type: object
+      summary: 获取课程标签
+      tags:
+      - 课程
+  /courses/list/mine:
     get:
       consumes:
       - application/json
@@ -231,7 +305,223 @@ paths:
       summary: 我的课程列表
       tags:
       - 课程
-  /evaluation/publish:
+  /evaluations/{evaluationId}/detail:
+    get:
+      consumes:
+      - application/json
+      description: 根据课评ID获取详情，详情包括标签
+      parameters:
+      - description: 课评ID
+        in: path
+        name: evaluationId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.EvaluationVo'
+              type: object
+      summary: 课评详情
+      tags:
+      - 课评
+  /evaluations/{evaluationId}/status:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 变更课评状态请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.EvaluationUpdateStatusReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 变更课评状态
+      tags:
+      - 课评
+  /evaluations/count/courses/{courseId}/invisible:
+    get:
+      consumes:
+      - application/json
+      description: 根据课程ID计算该课程的不可见评价数量。
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      summary: 不可见课评数
+      tags:
+      - 课评
+  /evaluations/count/mine:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户ID和课评状态分类统计用户的课评数量。
+      parameters:
+      - description: 课评状态
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      summary: 用户课评数
+      tags:
+      - 课评
+  /evaluations/list/all:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: 当前ID
+        in: query
+        name: cur_evaluation_id
+        required: true
+        type: integer
+      - description: 课评数量限制
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: 用于过滤课评的课程性质（可选）
+        in: query
+        name: property
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.EvaluationVo'
+                  type: array
+              type: object
+      summary: 课评列表[广场]
+      tags:
+      - 课评
+  /evaluations/list/courses/{courseId}:
+    get:
+      consumes:
+      - application/json
+      description: 根据课程ID获取课程评价列表，支持分页。
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: integer
+      - description: 当前课评ID
+        in: query
+        name: cur_evaluation_id
+        required: true
+        type: integer
+      - description: 返回课评的最大数量，上限为100
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.EvaluationVo'
+                  type: array
+              type: object
+      summary: 课评列表[指定课程]
+      tags:
+      - 课评
+  /evaluations/list/mine:
+    get:
+      consumes:
+      - application/json
+      description: 根据课程ID获取课程评价列表，支持分页。
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: integer
+      - description: 当前评估ID，用于分页
+        in: query
+        name: cur_evaluation_id
+        required: true
+        type: integer
+      - description: 上限为100
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: '课评状态: Public/Private/Folded'
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.EvaluationVo'
+                  type: array
+              type: object
+      summary: 课评列表[我的历史]
+      tags:
+      - 课评
+  /evaluations/save:
     post:
       consumes:
       - application/json
@@ -241,7 +531,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/web.EvaluationPublishReq'
+          $ref: '#/definitions/web.EvaluationSaveReq'
       produces:
       - application/json
       responses:
