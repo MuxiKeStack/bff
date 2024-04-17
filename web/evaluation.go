@@ -11,8 +11,10 @@ import (
 	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
+	"github.com/seata/seata-go/pkg/tm"
 	"golang.org/x/sync/errgroup"
 	"strconv"
+	"time"
 )
 
 type EvaluationHandler struct {
@@ -95,51 +97,43 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req EvaluationSaveReq, uc ijw
 
 	var res *evaluationv1.SaveResponse
 	// 下面涉及两个服务的原子性调用，需要使用分布式事务，这里的bff其实起到了聚合服务的作用...，引入实际意义聚合服务，目前没必要
-	//err := tm.WithGlobalTx(ctx,
-	//	&tm.GtxConfig{
-	//		Timeout: 1000 * time.Second, // todo
-	//		Name:    "ATPublishAndTagTx",
-	//	},
-	err := func(ctx context.Context) error {
-		var er error
-		res, er = h.evaluationClient.Save(ctx, &evaluationv1.SaveRequest{
-			Evaluation: &evaluationv1.Evaluation{
-				Id:          req.Id,
-				PublisherId: uc.Uid,
-				CourseId:    req.CourseId, // TODO 下面这个地方要用外键
-				StarRating:  uint32(req.StarRating),
-				Content:     req.Content,
-				Status:      evaluationv1.EvaluationStatus(status),
-			},
-		})
-		if er != nil {
+	err := tm.WithGlobalTx(ctx,
+		&tm.GtxConfig{
+			Timeout: 1000 * time.Second, // todo
+			Name:    "ATPublishAndTagTx",
+		},
+		func(ctx context.Context) error {
+			var er error
+			res, er = h.evaluationClient.Save(ctx, &evaluationv1.SaveRequest{
+				Evaluation: &evaluationv1.Evaluation{
+					Id:          req.Id,
+					PublisherId: uc.Uid,
+					CourseId:    req.CourseId, // TODO 下面这个地方要用外键
+					StarRating:  uint32(req.StarRating),
+					Content:     req.Content,
+					Status:      evaluationv1.EvaluationStatus(status),
+				},
+			})
+			if er != nil {
+				return er
+			}
+			_, er = h.tagClient.AttachAssessmentTags(ctx, &tagv1.AttachAssessmentTagsRequest{
+				TaggerId: uc.Uid,
+				Biz:      tagv1.Biz_Course,
+				BizId:    req.CourseId, // 外键
+				Tags:     assessmentTags,
+			})
+			if er != nil {
+				return er
+			}
+			_, er = h.tagClient.AttachFeatureTags(ctx, &tagv1.AttachFeatureTagsRequest{
+				TaggerId: uc.Uid,
+				Biz:      tagv1.Biz_Course,
+				BizId:    req.CourseId,
+				Tags:     featureTags,
+			})
 			return er
-		}
-		// 这里要去聚合 tag 服务，打两类标签
-		//var eg errgroup.Group
-		//eg.Go(func() error {
-		_, er = h.tagClient.AttachAssessmentTags(ctx, &tagv1.AttachAssessmentTagsRequest{
-			TaggerId: uc.Uid,
-			Biz:      tagv1.Biz_Course,
-			BizId:    req.CourseId, // 外键
-			Tags:     assessmentTags,
 		})
-		if er != nil {
-			return er
-		}
-		//return er
-		//})
-		//eg.Go(func() error {
-		_, er = h.tagClient.AttachFeatureTags(ctx, &tagv1.AttachFeatureTagsRequest{
-			TaggerId: uc.Uid,
-			Biz:      tagv1.Biz_Course,
-			BizId:    req.CourseId,
-			Tags:     featureTags,
-		})
-		return er
-		//})
-		//return eg.Wait()
-	}(ctx)
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,
