@@ -4,6 +4,7 @@ import (
 	ccnuv1 "github.com/MuxiKeStack/be-api/gen/proto/ccnu/v1"
 	coursev1 "github.com/MuxiKeStack/be-api/gen/proto/course/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
+	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
@@ -20,18 +21,20 @@ type CourseHandler struct {
 	course     coursev1.CourseServiceClient
 	evaluation evaluationv1.EvaluationServiceClient
 	user       userv1.UserServiceClient
+	tag        tagv1.TagServiceClient
 	l          logger.Logger
 }
 
-func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
-	evaluation evaluationv1.EvaluationServiceClient, user userv1.UserServiceClient, l logger.Logger) *CourseHandler {
-	return &CourseHandler{Handler: handler, course: course, evaluation: evaluation, user: user, l: l}
+func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient, evaluation evaluationv1.EvaluationServiceClient,
+	user userv1.UserServiceClient, tag tagv1.TagServiceClient, l logger.Logger) *CourseHandler {
+	return &CourseHandler{Handler: handler, course: course, evaluation: evaluation, user: user, tag: tag, l: l}
 }
 
 func (h *CourseHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	cg := s.Group("/courses")
 	cg.GET("/list/mine", authMiddleware, ginx.WrapClaims(h.List))
 	cg.GET("/:courseId/detail", ginx.Wrap(h.Detail))
+	cg.GET("/:courseId/tags", ginx.Wrap(h.Tags))
 }
 
 // @Summary 我的课程列表
@@ -158,6 +161,78 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 					Year:    src.GetYear(),
 					Term:    src.GetTerm(),
 				}
+			}),
+		},
+	}, nil
+}
+
+// @Summary 获取课程标签
+// @Description 包括课程特点和考核方式
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Param courseId path integer true "课程ID"
+// @Success 200 {object} ginx.Result{data=CourseTagsVo} "Success"
+// @Router /courses/{courseId}/tags [get]
+func (h *CourseHandler) Tags(ctx *gin.Context) (ginx.Result, error) {
+	cidStr := ctx.Param("courseId")
+	cid, err := strconv.ParseInt(cidStr, 10, 64)
+	if err != nil {
+		return ginx.Result{
+			Code: errs.CourseInvalidInput,
+			Msg:  "输入参数有误",
+		}, err
+	}
+	// 1. 查出courseId所有的，然后剔除不可见的：courseId
+	// 查到所有的非public的evaluation的uid，然后查到他们的tag，在内存中一个个减掉...真麻烦...
+	// 2. 查出不可见的tagger，在数据库count的时候就剔除，这种比较简单
+	// TODO 因为这个接口的性能一般，所以要优化
+	// 现在evaluation 找出courseId可见的uid ，然后在tag courseId中根据这些uid来找
+	res, err := h.evaluation.VisiblePublishersCourse(ctx, &evaluationv1.VisiblePublishersCourseRequest{
+		CourseId: cid,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	var (
+		eg    errgroup.Group
+		caRes *tagv1.CountAssessmentTagsByCourseTaggerResponse
+		cfRes *tagv1.CountFeatureTagsByCourseTaggerResponse
+	)
+	eg.Go(func() error {
+		var er error
+		caRes, er = h.tag.CountAssessmentTagsByCourseTagger(ctx, &tagv1.CountAssessmentTagsByCourseTaggerRequest{
+			CourseId:  cid,
+			TaggerIds: res.GetPublishers(),
+		})
+		return er
+	})
+	eg.Go(func() error {
+		var er error
+		cfRes, er = h.tag.CountFeatureTagsByCourseTagger(ctx, &tagv1.CountFeatureTagsByCourseTaggerRequest{
+			CourseId:  cid,
+			TaggerIds: res.GetPublishers(),
+		})
+		return er
+	})
+	err = eg.Wait()
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+		Data: CourseTagsVo{
+			Assessments: slice.ToMapV(caRes.GetItems(), func(element *tagv1.CountAssessmentItem) (string, int64) {
+				return element.GetTag().String(), element.GetCount()
+			}),
+			Features: slice.ToMapV(cfRes.GetItems(), func(element *tagv1.CountFeatureItem) (string, int64) {
+				return element.GetTag().String(), element.GetCount()
 			}),
 		},
 	}, nil
