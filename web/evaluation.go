@@ -97,6 +97,7 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req EvaluationSaveReq, uc ijw
 
 	var res *evaluationv1.SaveResponse
 	// 下面涉及两个服务的原子性调用，需要使用分布式事务，这里的bff其实起到了聚合服务的作用...，引入实际意义聚合服务，目前没必要
+	// go的seatago框架相当不成熟，比如这个事务内部不能用errgroup并发这两个attach tag
 	err := tm.WithGlobalTx(ctx,
 		&tm.GtxConfig{
 			Timeout: 1000 * time.Second, // todo
