@@ -11,38 +11,39 @@ type EvaluationSaveReq struct {
 }
 
 type EvaluationUpdateStatusReq struct {
-	Id     int64  `json:"id"`
 	Status string `json:"status"`
 }
 
-type ListRecentReq struct {
+type EvaluationListRecentReq struct {
 	CurEvaluationId int64  `form:"cur_evaluation_id"`
 	Limit           int64  `form:"limit"`
 	Property        string `form:"property"`
 }
 
 type EvaluationVo struct {
-	Id          int64  `json:"id"`
-	PublisherId int64  `json:"publisher_id"`
-	CourseId    int64  `json:"course_id"`
-	StarRating  uint32 `json:"star_rating"`
-	Content     string `json:"content"`
-	Status      string `json:"status"`
-	Utime       int64  `json:"utime"`
-	Ctime       int64  `json:"ctime"`
+	Id          int64    `json:"id"`
+	PublisherId int64    `json:"publisher_id"`
+	CourseId    int64    `json:"course_id"`
+	StarRating  uint32   `json:"star_rating"`
+	Content     string   `json:"content"`
+	Status      string   `json:"status"`
+	Assessments []string `json:"assessments"` // 考核方式，支持多选
+	Features    []string `json:"features"`    // 课程特点，支持多选
+	Utime       int64    `json:"utime"`
+	Ctime       int64    `json:"ctime"`
 }
 
-type ListCourseReq struct {
+type EvaluationListCourseReq struct {
 	CurEvaluationId int64 `form:"cur_evaluation_id"`
 	Limit           int64 `form:"limit"`
 }
 
-type ListMineReq struct {
+type EvaluationListMineReq struct {
 	CurEvaluationId int64  `form:"cur_evaluation_id"`
 	Limit           int64  `form:"limit"`
 	Status          string `form:"status"`
 }
 
-type CountMineReq struct {
+type EvaluationCountMineReq struct {
 	Status string `form:"status"`
 }

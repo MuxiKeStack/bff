@@ -47,3 +47,8 @@ type InviteUserToAnswerReq struct {
 type CourseQuestionPublishReq struct {
 	Content string `json:"content"`
 }
+
+type CourseTagsVo struct {
+	Assessments map[string]int64 `json:"assessments"` // 标签:数量
+	Features    map[string]int64 `json:"features"`
+}
