@@ -109,7 +109,7 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req EvaluationSaveReq, uc ijw
 				Evaluation: &evaluationv1.Evaluation{
 					Id:          req.Id,
 					PublisherId: uc.Uid,
-					CourseId:    req.CourseId, // TODO 下面这个地方要用外键
+					CourseId:    req.CourseId,
 					StarRating:  uint32(req.StarRating),
 					Content:     req.Content,
 					Status:      evaluationv1.EvaluationStatus(status),
