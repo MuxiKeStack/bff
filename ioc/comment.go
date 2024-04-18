@@ -23,7 +23,7 @@ func InitCommentClient(ecli *clientv3.Client) commentv1.CommentServiceClient {
 	cc, err := grpc.DialInsecure(context.Background(),
 		grpc.WithEndpoint(cfg.Endpoint),
 		grpc.WithDiscovery(r),
-		grpc.WithTimeout(10*time.Second), // TODO
+		grpc.WithTimeout(100*time.Second), // TODO
 	)
 	if err != nil {
 		panic(err)

@@ -23,7 +23,7 @@ type CommentVo struct {
 	Content         string `json:"content"`
 	RootCommentId   int64  `json:"root_comment_id"`
 	ParentCommentId int64  `json:"parent_comment_id"`
-	ReplyToUserId   int64  `json:"reply_to_user_id"`
+	ReplyToUid      int64  `json:"reply_to_uid"`
 	Utime           int64  `json:"utime"`
 	Ctime           int64  `json:"ctime"`
 }
