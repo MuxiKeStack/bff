@@ -26,3 +26,7 @@ const (
 	EvaluationInvalidInput     = 404001
 	EvaluationPermissionDenied = 404002
 )
+
+const (
+	CommentInvalidInput = 405001
+)

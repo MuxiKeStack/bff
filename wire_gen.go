@@ -29,6 +29,8 @@ func InitWebServer() *ginx.Server {
 	questionServiceClient := ioc.InitQuestionClient(client)
 	questionHandler := web.NewQuestionHandler(questionServiceClient, userServiceClient, logger)
 	evaluationHandler := web.NewEvaluationHandler(evaluationServiceClient, tagServiceClient)
-	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler)
+	commentServiceClient := ioc.InitCommentClient(client)
+	commentHandler := web.NewCommentHandler(commentServiceClient)
+	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler)
 	return server
 }
