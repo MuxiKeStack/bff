@@ -9,6 +9,42 @@ definitions:
         description: 错误或成功 描述
         type: string
     type: object
+  web.CommentPublishReq:
+    properties:
+      biz:
+        type: string
+      biz_id:
+        type: integer
+      content:
+        type: string
+      parent_id:
+        type: integer
+      root_id:
+        type: integer
+    type: object
+  web.CommentVo:
+    properties:
+      biz:
+        type: string
+      biz_id:
+        type: integer
+      commentator_id:
+        type: integer
+      content:
+        type: string
+      ctime:
+        type: integer
+      id:
+        type: integer
+      parent_comment_id:
+        type: integer
+      reply_to_uid:
+        type: integer
+      root_comment_id:
+        type: integer
+      utime:
+        type: integer
+    type: object
   web.CourseTagsVo:
     properties:
       assessments:
@@ -224,6 +260,157 @@ definitions:
 info:
   contact: {}
 paths:
+  /comments/{commentId}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据评论ID删除评论。
+      parameters:
+      - description: 评论ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功删除评论
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 删除评论
+      tags:
+      - 评论
+  /comments/count:
+    get:
+      consumes:
+      - application/json
+      description: 根据业务类型和业务ID计数评论。
+      parameters:
+      - description: 业务类型
+        in: query
+        name: biz
+        required: true
+        type: string
+      - description: 业务ID
+        in: query
+        name: biz_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回评论数
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      summary: 评论数
+      tags:
+      - 评论
+  /comments/list:
+    get:
+      consumes:
+      - application/json
+      description: 根据业务类型和业务ID列出一级评论。
+      parameters:
+      - description: 业务类型
+        in: query
+        name: biz
+        required: true
+        type: string
+      - description: 业务ID
+        in: query
+        name: biz_id
+        required: true
+        type: integer
+      - description: 当前评论ID
+        in: query
+        name: cur_comment_id
+        type: integer
+      - description: 返回数量限制
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回评论列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.CommentVo'
+                  type: array
+              type: object
+      summary: 评论列表[一级]
+      tags:
+      - 评论
+  /comments/publish:
+    post:
+      consumes:
+      - application/json
+      description: 根据业务类型、业务ID、rootId，parentId发布评论。
+      parameters:
+      - description: 发布评论请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.CommentPublishReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 发布评论
+      tags:
+      - 评论
+  /comments/replies/list:
+    get:
+      consumes:
+      - application/json
+      description: 实际上二级及其以下的所有都拍平到二级进行返回了。
+      parameters:
+      - description: 根评论ID
+        in: query
+        name: root_id
+        required: true
+        type: integer
+      - description: 当前评论ID
+        in: query
+        name: cur_comment_id
+        type: integer
+      - description: 返回数量限制
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回评论列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.CommentVo'
+                  type: array
+              type: object
+      summary: 评论列表[二级]
+      tags:
+      - 评论
   /courses/{courseId}/detail:
     get:
       consumes:

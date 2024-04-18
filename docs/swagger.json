@@ -4,6 +4,248 @@
         "contact": {}
     },
     "paths": {
+        "/comments/count": {
+            "get": {
+                "description": "根据业务类型和业务ID计数评论。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论"
+                ],
+                "summary": "评论数",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "业务类型",
+                        "name": "biz",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "业务ID",
+                        "name": "biz_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回评论数",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comments/list": {
+            "get": {
+                "description": "根据业务类型和业务ID列出一级评论。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论"
+                ],
+                "summary": "评论列表[一级]",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "业务类型",
+                        "name": "biz",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "业务ID",
+                        "name": "biz_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "当前评论ID",
+                        "name": "cur_comment_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "返回数量限制",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回评论列表",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.CommentVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comments/publish": {
+            "post": {
+                "description": "根据业务类型、业务ID、rootId，parentId发布评论。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论"
+                ],
+                "summary": "发布评论",
+                "parameters": [
+                    {
+                        "description": "发布评论请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.CommentPublishReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/comments/replies/list": {
+            "get": {
+                "description": "实际上二级及其以下的所有都拍平到二级进行返回了。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论"
+                ],
+                "summary": "评论列表[二级]",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "根评论ID",
+                        "name": "root_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "当前评论ID",
+                        "name": "cur_comment_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "返回数量限制",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回评论列表",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.CommentVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comments/{commentId}": {
+            "delete": {
+                "description": "根据评论ID删除评论。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论"
+                ],
+                "summary": "删除评论",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "评论ID",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功删除评论",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
         "/courses/list/mine": {
             "get": {
                 "description": "获取用户的课程列表",
@@ -929,6 +1171,61 @@
                 "msg": {
                     "description": "错误或成功 描述",
                     "type": "string"
+                }
+            }
+        },
+        "web.CommentPublishReq": {
+            "type": "object",
+            "properties": {
+                "biz": {
+                    "type": "string"
+                },
+                "biz_id": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "root_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "web.CommentVo": {
+            "type": "object",
+            "properties": {
+                "biz": {
+                    "type": "string"
+                },
+                "biz_id": {
+                    "type": "integer"
+                },
+                "commentator_id": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "ctime": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "parent_comment_id": {
+                    "type": "integer"
+                },
+                "reply_to_uid": {
+                    "type": "integer"
+                },
+                "root_comment_id": {
+                    "type": "integer"
+                },
+                "utime": {
+                    "type": "integer"
                 }
             }
         },
