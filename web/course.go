@@ -125,8 +125,8 @@ func (h *CourseHandler) List(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result,
 // @Success 200 {object} ginx.Result{data=PublicCourseVo} "Success"
 // @Router /courses/{courseId}/detail [get]
 func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
-	idStr := ctx.Param("courseId")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	cidStr := ctx.Param("courseId")
+	cid, err := strconv.ParseInt(cidStr, 10, 64)
 	if err != nil {
 		return ginx.Result{
 			Code: errs.CourseInvalidInput,
@@ -134,8 +134,8 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 		}, err
 	}
 	// 去查
-	res, err := h.course.GetDetailById(ctx, &coursev1.GetDetailByIdRequest{
-		CourseId: id,
+	detailRes, err := h.course.GetDetailById(ctx, &coursev1.GetDetailByIdRequest{
+		CourseId: cid,
 	})
 	if err != nil {
 		return ginx.Result{
@@ -143,17 +143,26 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 			Msg:  "系统异常",
 		}, err
 	}
-
+	scoreRes, err := h.evaluation.CompositeScoreCourse(ctx, &evaluationv1.CompositeScoreCourseRequest{
+		CourseId: cid,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
 	return ginx.Result{
 		Msg: "Success",
 		Data: PublicCourseVo{
-			Id:       res.GetCourse().GetId(),
-			Name:     res.GetCourse().GetName(),
-			Teacher:  res.GetCourse().GetTeacher(),
-			School:   res.GetCourse().GetSchool(),
-			Property: res.GetCourse().GetProperty().String(),
-			Credit:   res.GetCourse().GetCredit(),
-			Grades: slice.Map(res.GetCourse().GetGrades(), func(idx int, src *coursev1.Grade) Grade {
+			Id:             detailRes.GetCourse().GetId(),
+			Name:           detailRes.GetCourse().GetName(),
+			Teacher:        detailRes.GetCourse().GetTeacher(),
+			School:         detailRes.GetCourse().GetSchool(),
+			CompositeScore: scoreRes.GetScore(),
+			Property:       detailRes.GetCourse().GetProperty().String(),
+			Credit:         detailRes.GetCourse().GetCredit(),
+			Grades: slice.Map(detailRes.GetCourse().GetGrades(), func(idx int, src *coursev1.Grade) Grade {
 				return Grade{
 					Regular: src.GetRegular(),
 					Final:   src.GetFinal(),

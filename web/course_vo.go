@@ -15,13 +15,14 @@ type ProfileCourseVo struct {
 }
 
 type PublicCourseVo struct {
-	Id       int64   `json:"id"`
-	Name     string  `json:"name"`
-	Teacher  string  `json:"teacher"`
-	School   string  `json:"school"`
-	Property string  `json:"type"`
-	Credit   float32 `json:"credit"`
-	Grades   []Grade `json:"grades"`
+	Id             int64   `json:"id"`
+	Name           string  `json:"name"`
+	Teacher        string  `json:"teacher"`
+	School         string  `json:"school"`
+	CompositeScore float64 `json:"composite_score"`
+	Property       string  `json:"type"`
+	Credit         float32 `json:"credit"`
+	Grades         []Grade `json:"grades"`
 }
 
 type Grade struct {

@@ -1135,6 +1135,9 @@ const docTemplate = `{
         "web.PublicCourseVo": {
             "type": "object",
             "properties": {
+                "composite_score": {
+                    "type": "number"
+                },
                 "credit": {
                     "type": "number"
                 },

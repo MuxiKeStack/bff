@@ -138,6 +138,8 @@ definitions:
     type: object
   web.PublicCourseVo:
     properties:
+      composite_score:
+        type: number
       credit:
         type: number
       grades:
