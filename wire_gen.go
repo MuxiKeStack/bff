@@ -10,6 +10,7 @@ import (
 	"github.com/MuxiKeStack/bff/ioc"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web"
+	"github.com/MuxiKeStack/bff/web/evaluation"
 )
 
 // Injectors from wire.go:
@@ -28,8 +29,9 @@ func InitWebServer() *ginx.Server {
 	courseHandler := web.NewCourseHandler(handler, courseServiceClient, evaluationServiceClient, userServiceClient, tagServiceClient, logger)
 	questionServiceClient := ioc.InitQuestionClient(client)
 	questionHandler := web.NewQuestionHandler(questionServiceClient, userServiceClient, logger)
-	evaluationHandler := web.NewEvaluationHandler(evaluationServiceClient, tagServiceClient)
+	interactServiceClient := ioc.InitInteractClient(client)
 	commentServiceClient := ioc.InitCommentClient(client)
+	evaluationHandler := evaluation.NewEvaluationHandler(evaluationServiceClient, tagServiceClient, interactServiceClient, commentServiceClient)
 	commentHandler := web.NewCommentHandler(commentServiceClient)
 	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler)
 	return server

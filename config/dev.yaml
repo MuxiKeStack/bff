@@ -25,7 +25,8 @@ grpc:
       endpoint: "discovery:///tag"
     comment:
       endpoint: "discovery:///comment"
-
+    interact:
+      endpoint: "discovery:///interact"
 
 
 jwt:

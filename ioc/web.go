@@ -5,6 +5,7 @@ import (
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/pkg/logger"
 	"github.com/MuxiKeStack/bff/web"
+	"github.com/MuxiKeStack/bff/web/evaluation"
 	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/MuxiKeStack/bff/web/middleware"
 	"github.com/gin-contrib/cors"
@@ -16,7 +17,7 @@ import (
 )
 
 func InitGinServer(l logger.Logger, jwtHdl ijwt.Handler, user *web.UserHandler,
-	course *web.CourseHandler, question *web.QuestionHandler, evaluation *web.EvaluationHandler, comment *web.CommentHandler) *ginx.Server {
+	course *web.CourseHandler, question *web.QuestionHandler, evaluation *evaluation.EvaluationHandler, comment *web.CommentHandler) *ginx.Server {
 	engine := gin.Default()
 	engine.Use(
 		corsHdl(),

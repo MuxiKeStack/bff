@@ -6,6 +6,7 @@ import (
 	"github.com/MuxiKeStack/bff/ioc"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web"
+	"github.com/MuxiKeStack/bff/web/evaluation"
 	"github.com/google/wire"
 )
 
@@ -13,8 +14,9 @@ func InitWebServer() *ginx.Server {
 	wire.Build(
 		ioc.InitGinServer,
 		web.NewUserHandler, web.NewCourseHandler, ioc.InitJwtHandler, web.NewQuestionHandler,
-		web.NewEvaluationHandler, web.NewCommentHandler,
+		evaluation.NewEvaluationHandler, web.NewCommentHandler,
 		ioc.InitCommentClient,
+		ioc.InitInteractClient,
 		ioc.InitTagClient,
 		ioc.InitCCNUClient,
 		ioc.InitCourseClient,
