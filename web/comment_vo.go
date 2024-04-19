@@ -38,3 +38,7 @@ type CommentCountReq struct {
 	Biz   string `form:"biz"`
 	BizId int64  `form:"biz_id"`
 }
+
+type CourseCollectReq struct {
+	Collect bool `json:"collect"`
+}

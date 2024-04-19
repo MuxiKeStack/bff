@@ -56,3 +56,20 @@ type CourseTagsVo struct {
 	Assessments map[string]int64 `json:"assessments"` // 标签:数量
 	Features    map[string]int64 `json:"features"`
 }
+
+type CourseListCollectionMineReq struct {
+	CurCollectionId int64 `form:"cur_collection_id"`
+	Limit           int64 `form:"limit"`
+}
+
+type CollectedCourseVo struct {
+	Id             int64   `json:"id"`
+	CollectionId   int64   `json:"collection_id"`
+	Name           string  `json:"name"`
+	Teacher        string  `json:"teacher"`
+	School         string  `json:"school"`
+	CompositeScore float64 `json:"composite_score"`
+	Property       string  `json:"type"`
+	Credit         float32 `json:"credit"`
+	IsCollected    bool    `json:"is_collected"`
+}

@@ -45,7 +45,10 @@ func (h *CourseHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handler
 	cg := s.Group("/courses")
 	cg.GET("/list/mine", authMiddleware, ginx.WrapClaims(h.List))
 	cg.GET("/:courseId/detail", authMiddleware, ginx.WrapClaims(h.Detail))
-	cg.GET("/:courseId/tags", ginx.Wrap(h.Tags)) // 冗余接口，
+	cg.GET("/:courseId/tags", ginx.Wrap(h.Tags))                                    // 冗余接口，
+	cg.POST("/:courseId/collect", authMiddleware, ginx.WrapClaimsAndReq(h.Collect)) // 收藏或取消收藏
+	cg.GET("/collections/list/mine", authMiddleware, ginx.WrapClaimsAndReq(h.ListCollectionMine))
+	cg.GET("/collections/count/mine", authMiddleware, ginx.WrapClaims(h.CountCollectionMine))
 }
 
 // @Summary 我的课程列表
@@ -307,5 +310,113 @@ func (h *CourseHandler) Tags(ctx *gin.Context) (ginx.Result, error) {
 				return element.GetTag().String(), element.GetCount()
 			}),
 		},
+	}, nil
+}
+
+func (h *CourseHandler) Collect(ctx *gin.Context, req CourseCollectReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	cidStr := ctx.Param("courseId")
+	cid, err := strconv.ParseInt(cidStr, 10, 64)
+	if err != nil {
+		return ginx.Result{
+			Code: errs.CourseInvalidInput,
+			Msg:  "输入参数有误",
+		}, err
+	}
+	if req.Collect {
+		_, err = h.interact.AddCollection(ctx, &interactv1.AddCollectionRequest{
+			Uid:   uc.Uid,
+			Biz:   interactv1.Biz_Course,
+			BizId: cid,
+		})
+	} else {
+		_, err = h.interact.RemoveCollection(ctx, &interactv1.RemoveCollectionRequest{
+			Uid:   uc.Uid,
+			Biz:   interactv1.Biz_Course,
+			BizId: cid,
+		})
+	}
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+	}, nil
+}
+
+func (h *CourseHandler) ListCollectionMine(ctx *gin.Context, req CourseListCollectionMineReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	res, err := h.interact.ListCollections(ctx, &interactv1.ListCollectionsRequest{
+		Uid:             uc.Uid,
+		Biz:             interactv1.Biz_Course,
+		CurCollectionId: req.CurCollectionId,
+		Limit:           req.Limit,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	courseVos := slice.Map(res.GetCollections(),
+		func(idx int, src *interactv1.Collection) CollectedCourseVo {
+			return CollectedCourseVo{
+				Id:           src.GetBizId(),
+				CollectionId: src.GetCollectionId(),
+			}
+		})
+	var eg errgroup.Group
+	for i, c := range courseVos {
+		eg.Go(func() error {
+			detailRes, er := h.course.GetDetailById(ctx, &coursev1.GetDetailByIdRequest{
+				CourseId: c.Id,
+			})
+			if er != nil {
+				return er
+			}
+			scoreRes, er := h.evaluation.CompositeScoreCourse(ctx, &evaluationv1.CompositeScoreCourseRequest{
+				CourseId: c.Id,
+			})
+			if er != nil {
+				return er
+			}
+			courseVos[i].Name = detailRes.GetCourse().GetName()
+			courseVos[i].Property = detailRes.GetCourse().GetProperty().String()
+			courseVos[i].Credit = detailRes.GetCourse().GetCredit()
+			courseVos[i].School = detailRes.GetCourse().GetSchool()
+			courseVos[i].Teacher = detailRes.GetCourse().GetTeacher()
+			courseVos[i].CompositeScore = scoreRes.GetScore()
+			courseVos[i].IsCollected = true
+			return nil
+		})
+	}
+	err = eg.Wait()
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: courseVos,
+	}, nil
+}
+
+func (h *CourseHandler) CountCollectionMine(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
+	res, err := h.interact.CountCollections(ctx, &interactv1.CountCollectionsRequest{
+		Uid: uc.Uid,
+		Biz: interactv1.Biz_Course,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: res.GetTotalCount(),
 	}, nil
 }
