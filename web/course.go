@@ -4,6 +4,7 @@ import (
 	ccnuv1 "github.com/MuxiKeStack/be-api/gen/proto/ccnu/v1"
 	coursev1 "github.com/MuxiKeStack/be-api/gen/proto/course/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
+	interactv1 "github.com/MuxiKeStack/be-api/gen/proto/interact/v1"
 	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
@@ -22,19 +23,29 @@ type CourseHandler struct {
 	evaluation evaluationv1.EvaluationServiceClient
 	user       userv1.UserServiceClient
 	tag        tagv1.TagServiceClient
+	interact   interactv1.InteractServiceClient
 	l          logger.Logger
 }
 
-func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient, evaluation evaluationv1.EvaluationServiceClient,
-	user userv1.UserServiceClient, tag tagv1.TagServiceClient, l logger.Logger) *CourseHandler {
-	return &CourseHandler{Handler: handler, course: course, evaluation: evaluation, user: user, tag: tag, l: l}
+func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
+	evaluation evaluationv1.EvaluationServiceClient, user userv1.UserServiceClient,
+	tag tagv1.TagServiceClient, l logger.Logger, interact interactv1.InteractServiceClient) *CourseHandler {
+	return &CourseHandler{
+		Handler:    handler,
+		course:     course,
+		evaluation: evaluation,
+		user:       user,
+		tag:        tag,
+		interact:   interact,
+		l:          l,
+	}
 }
 
 func (h *CourseHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	cg := s.Group("/courses")
 	cg.GET("/list/mine", authMiddleware, ginx.WrapClaims(h.List))
-	cg.GET("/:courseId/detail", ginx.Wrap(h.Detail))
-	cg.GET("/:courseId/tags", ginx.Wrap(h.Tags))
+	cg.GET("/:courseId/detail", authMiddleware, ginx.WrapClaims(h.Detail))
+	cg.GET("/:courseId/tags", ginx.Wrap(h.Tags)) // 冗余接口，
 }
 
 // @Summary 我的课程列表
@@ -124,7 +135,7 @@ func (h *CourseHandler) List(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result,
 // @Param courseId path integer true "课程ID"
 // @Success 200 {object} ginx.Result{data=PublicCourseVo} "Success"
 // @Router /courses/{courseId}/detail [get]
-func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
+func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
 	cidStr := ctx.Param("courseId")
 	cid, err := strconv.ParseInt(cidStr, 10, 64)
 	if err != nil {
@@ -134,7 +145,38 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 		}, err
 	}
 	// 去查
-	detailRes, err := h.course.GetDetailById(ctx, &coursev1.GetDetailByIdRequest{
+	var (
+		eg        errgroup.Group
+		detailRes *coursev1.GetDetailByIdResponse
+		scoreRes  *evaluationv1.CompositeScoreCourseResponse
+		checkRes  *interactv1.CheckCollectionResponse
+		caRes     *tagv1.CountAssessmentTagsByCourseTaggerResponse
+		cfRes     *tagv1.CountFeatureTagsByCourseTaggerResponse
+	)
+	eg.Go(func() error {
+		var er error
+		detailRes, er = h.course.GetDetailById(ctx, &coursev1.GetDetailByIdRequest{
+			CourseId: cid,
+		})
+		return er
+	})
+	eg.Go(func() error {
+		var er error
+		scoreRes, er = h.evaluation.CompositeScoreCourse(ctx, &evaluationv1.CompositeScoreCourseRequest{
+			CourseId: cid,
+		})
+		return er
+	})
+	eg.Go(func() error {
+		var er error
+		checkRes, er = h.interact.CheckCollection(ctx, &interactv1.CheckCollectionRequest{
+			Uid:   uc.Uid,
+			Biz:   interactv1.Biz_Course,
+			BizId: cid,
+		})
+		return er
+	})
+	publishersRes, err := h.evaluation.VisiblePublishersCourse(ctx, &evaluationv1.VisiblePublishersCourseRequest{
 		CourseId: cid,
 	})
 	if err != nil {
@@ -143,9 +185,23 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 			Msg:  "系统异常",
 		}, err
 	}
-	scoreRes, err := h.evaluation.CompositeScoreCourse(ctx, &evaluationv1.CompositeScoreCourseRequest{
-		CourseId: cid,
+	eg.Go(func() error {
+		var er error
+		caRes, er = h.tag.CountAssessmentTagsByCourseTagger(ctx, &tagv1.CountAssessmentTagsByCourseTaggerRequest{
+			CourseId:  cid,
+			TaggerIds: publishersRes.GetPublishers(),
+		})
+		return er
 	})
+	eg.Go(func() error {
+		var er error
+		cfRes, er = h.tag.CountFeatureTagsByCourseTagger(ctx, &tagv1.CountFeatureTagsByCourseTaggerRequest{
+			CourseId:  cid,
+			TaggerIds: publishersRes.GetPublishers(),
+		})
+		return er
+	})
+	err = eg.Wait()
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,
@@ -162,6 +218,13 @@ func (h *CourseHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 			CompositeScore: scoreRes.GetScore(),
 			Property:       detailRes.GetCourse().GetProperty().String(),
 			Credit:         detailRes.GetCourse().GetCredit(),
+			Assessments: slice.ToMapV(caRes.GetItems(), func(element *tagv1.CountAssessmentItem) (string, int64) {
+				return element.GetTag().String(), element.GetCount()
+			}),
+			Features: slice.ToMapV(cfRes.GetItems(), func(element *tagv1.CountFeatureItem) (string, int64) {
+				return element.GetTag().String(), element.GetCount()
+			}),
+			IsCollected: checkRes.GetIsCollected(),
 			Grades: slice.Map(detailRes.GetCourse().GetGrades(), func(idx int, src *coursev1.Grade) Grade {
 				return Grade{
 					Regular: src.GetRegular(),
