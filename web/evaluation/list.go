@@ -5,7 +5,7 @@ import (
 	commentv1 "github.com/MuxiKeStack/be-api/gen/proto/comment/v1"
 	coursev1 "github.com/MuxiKeStack/be-api/gen/proto/course/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
-	interactv1 "github.com/MuxiKeStack/be-api/gen/proto/interact/v1"
+	stancev1 "github.com/MuxiKeStack/be-api/gen/proto/stance/v1"
 	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
@@ -70,9 +70,9 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 	var eg errgroup.Group
 	for i := range evaluationVos {
 		eg.Go(func() error {
-			stanceRes, er := h.interactClient.GetUserStance(ctx, &interactv1.GetUserStanceRequest{
+			stanceRes, er := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
 				Uid:   uc.Uid,
-				Biz:   interactv1.Biz_Evaluation,
+				Biz:   stancev1.Biz_Evaluation,
 				BizId: evaluationVos[i].Id,
 			})
 			if er != nil {
@@ -172,9 +172,9 @@ func (h *EvaluationHandler) ListCourse(ctx *gin.Context, req ListCourseReq, uc i
 			evaluationVos[i].Features = slice.Map(ftRes.GetTags(), func(idx int, src tagv1.FeatureTag) string {
 				return src.String()
 			})
-			stanceRes, er := h.interactClient.GetUserStance(ctx, &interactv1.GetUserStanceRequest{
+			stanceRes, er := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
 				Uid:   uc.Uid,
-				Biz:   interactv1.Biz_Evaluation,
+				Biz:   stancev1.Biz_Evaluation,
 				BizId: evaluationVos[i].Id,
 			})
 			if er != nil {
@@ -259,9 +259,9 @@ func (h *EvaluationHandler) ListMine(ctx *gin.Context, req ListMineReq, uc ijwt.
 	var eg errgroup.Group
 	for i := range evaluationVos {
 		eg.Go(func() error {
-			stanceRes, er := h.interactClient.GetUserStance(ctx, &interactv1.GetUserStanceRequest{
+			stanceRes, er := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
 				Uid:   uc.Uid,
-				Biz:   interactv1.Biz_Evaluation,
+				Biz:   stancev1.Biz_Evaluation,
 				BizId: evaluationVos[i].Id,
 			})
 			if er != nil {

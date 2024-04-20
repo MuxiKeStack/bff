@@ -2,7 +2,7 @@ package ioc
 
 import (
 	"context"
-	interactv1 "github.com/MuxiKeStack/be-api/gen/proto/interact/v1"
+	collectv1 "github.com/MuxiKeStack/be-api/gen/proto/collect/v1"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/spf13/viper"
@@ -10,12 +10,12 @@ import (
 	"time"
 )
 
-func InitInteractClient(ecli *clientv3.Client) interactv1.InteractServiceClient {
+func InitCollectClient(ecli *clientv3.Client) collectv1.CollectServiceClient {
 	type Config struct {
 		Endpoint string `yaml:"endpoint"`
 	}
 	var cfg Config
-	err := viper.UnmarshalKey("grpc.client.interact", &cfg)
+	err := viper.UnmarshalKey("grpc.client.collect", &cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -28,6 +28,6 @@ func InitInteractClient(ecli *clientv3.Client) interactv1.InteractServiceClient 
 	if err != nil {
 		panic(err)
 	}
-	client := interactv1.NewInteractServiceClient(cc)
+	client := collectv1.NewCollectServiceClient(cc)
 	return client
 }

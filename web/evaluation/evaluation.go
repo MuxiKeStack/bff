@@ -5,7 +5,7 @@ import (
 	"errors"
 	commentv1 "github.com/MuxiKeStack/be-api/gen/proto/comment/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
-	interactv1 "github.com/MuxiKeStack/be-api/gen/proto/interact/v1"
+	stancev1 "github.com/MuxiKeStack/be-api/gen/proto/stance/v1"
 	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
@@ -21,16 +21,16 @@ import (
 type EvaluationHandler struct {
 	evaluationClient evaluationv1.EvaluationServiceClient
 	tagClient        tagv1.TagServiceClient
-	interactClient   interactv1.InteractServiceClient
+	stanceClient     stancev1.StanceServiceClient
 	commentClient    commentv1.CommentServiceClient
 }
 
 func NewEvaluationHandler(evaluationClient evaluationv1.EvaluationServiceClient, tagClient tagv1.TagServiceClient,
-	interactClient interactv1.InteractServiceClient, commentClient commentv1.CommentServiceClient) *EvaluationHandler {
+	interactClient stancev1.StanceServiceClient, commentClient commentv1.CommentServiceClient) *EvaluationHandler {
 	return &EvaluationHandler{
 		evaluationClient: evaluationClient,
 		tagClient:        tagClient,
-		interactClient:   interactClient,
+		stanceClient:     interactClient,
 		commentClient:    commentClient,
 	}
 }
@@ -237,7 +237,7 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 		eg              errgroup.Group
 		atRes           *tagv1.GetAssessmentTagsByTaggerBizResponse
 		ftRes           *tagv1.GetFeatureTagsByTaggerBizResponse
-		stanceRes       *interactv1.GetUserStanceResponse
+		stanceRes       *stancev1.GetUserStanceResponse
 		countCommentRes *commentv1.CountCommentResponse
 	)
 	eg.Go(func() error {
@@ -262,9 +262,9 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 	// 支持数，反对数，评论数
 	eg.Go(func() error {
 		var er error
-		stanceRes, er = h.interactClient.GetUserStance(ctx, &interactv1.GetUserStanceRequest{
+		stanceRes, er = h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
 			Uid:   uc.Uid,
-			Biz:   interactv1.Biz_Evaluation,
+			Biz:   stancev1.Biz_Evaluation,
 			BizId: eid,
 		})
 		return er

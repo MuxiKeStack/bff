@@ -1,7 +1,7 @@
 package evaluation
 
 import (
-	interactv1 "github.com/MuxiKeStack/be-api/gen/proto/interact/v1"
+	stancev1 "github.com/MuxiKeStack/be-api/gen/proto/stance/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web/ijwt"
@@ -18,18 +18,18 @@ func (h *EvaluationHandler) Endorse(ctx *gin.Context, req EndorseReq, uc ijwt.Us
 			Msg:  "输入参数有误",
 		}, err
 	}
-	_, ok := interactv1.Stance_name[req.Stance]
+	_, ok := stancev1.Stance_name[req.Stance]
 	if !ok {
 		return ginx.Result{
 			Code: errs.EvaluationInvalidInput,
 			Msg:  "不合法的立场",
 		}, err
 	}
-	_, err = h.interactClient.Endorse(ctx, &interactv1.EndorseRequest{
+	_, err = h.stanceClient.Endorse(ctx, &stancev1.EndorseRequest{
 		Uid:    uc.Uid,
-		Biz:    interactv1.Biz_Evaluation,
+		Biz:    stancev1.Biz_Evaluation,
 		BizId:  eid,
-		Stance: interactv1.Stance(req.Stance),
+		Stance: stancev1.Stance(req.Stance),
 	})
 	if err != nil {
 		return ginx.Result{

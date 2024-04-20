@@ -2,9 +2,9 @@ package web
 
 import (
 	ccnuv1 "github.com/MuxiKeStack/be-api/gen/proto/ccnu/v1"
+	collectv1 "github.com/MuxiKeStack/be-api/gen/proto/collect/v1"
 	coursev1 "github.com/MuxiKeStack/be-api/gen/proto/course/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
-	interactv1 "github.com/MuxiKeStack/be-api/gen/proto/interact/v1"
 	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
@@ -23,20 +23,20 @@ type CourseHandler struct {
 	evaluation evaluationv1.EvaluationServiceClient
 	user       userv1.UserServiceClient
 	tag        tagv1.TagServiceClient
-	interact   interactv1.InteractServiceClient
+	collect    collectv1.CollectServiceClient
 	l          logger.Logger
 }
 
 func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
 	evaluation evaluationv1.EvaluationServiceClient, user userv1.UserServiceClient,
-	tag tagv1.TagServiceClient, l logger.Logger, interact interactv1.InteractServiceClient) *CourseHandler {
+	tag tagv1.TagServiceClient, l logger.Logger, collect collectv1.CollectServiceClient) *CourseHandler {
 	return &CourseHandler{
 		Handler:    handler,
 		course:     course,
 		evaluation: evaluation,
 		user:       user,
 		tag:        tag,
-		interact:   interact,
+		collect:    collect,
 		l:          l,
 	}
 }
@@ -152,7 +152,7 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 		eg        errgroup.Group
 		detailRes *coursev1.GetDetailByIdResponse
 		scoreRes  *evaluationv1.CompositeScoreCourseResponse
-		checkRes  *interactv1.CheckCollectionResponse
+		checkRes  *collectv1.CheckCollectionResponse
 		caRes     *tagv1.CountAssessmentTagsByCourseTaggerResponse
 		cfRes     *tagv1.CountFeatureTagsByCourseTaggerResponse
 	)
@@ -172,9 +172,9 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 	})
 	eg.Go(func() error {
 		var er error
-		checkRes, er = h.interact.CheckCollection(ctx, &interactv1.CheckCollectionRequest{
+		checkRes, er = h.collect.CheckCollection(ctx, &collectv1.CheckCollectionRequest{
 			Uid:   uc.Uid,
-			Biz:   interactv1.Biz_Course,
+			Biz:   collectv1.Biz_Course,
 			BizId: cid,
 		})
 		return er
@@ -323,15 +323,17 @@ func (h *CourseHandler) Collect(ctx *gin.Context, req CourseCollectReq, uc ijwt.
 		}, err
 	}
 	if req.Collect {
-		_, err = h.interact.AddCollection(ctx, &interactv1.AddCollectionRequest{
-			Uid:   uc.Uid,
-			Biz:   interactv1.Biz_Course,
-			BizId: cid,
+		_, err = h.collect.AddCollection(ctx, &collectv1.AddCollectionRequest{
+			Collection: &collectv1.Collection{
+				Uid:   uc.Uid,
+				Biz:   collectv1.Biz_Course,
+				BizId: cid,
+			},
 		})
 	} else {
-		_, err = h.interact.RemoveCollection(ctx, &interactv1.RemoveCollectionRequest{
+		_, err = h.collect.RemoveCollection(ctx, &collectv1.RemoveCollectionRequest{
 			Uid:   uc.Uid,
-			Biz:   interactv1.Biz_Course,
+			Biz:   collectv1.Biz_Course,
 			BizId: cid,
 		})
 	}
@@ -347,9 +349,9 @@ func (h *CourseHandler) Collect(ctx *gin.Context, req CourseCollectReq, uc ijwt.
 }
 
 func (h *CourseHandler) ListCollectionMine(ctx *gin.Context, req CourseListCollectionMineReq, uc ijwt.UserClaims) (ginx.Result, error) {
-	res, err := h.interact.ListCollections(ctx, &interactv1.ListCollectionsRequest{
+	res, err := h.collect.ListCollections(ctx, &collectv1.ListCollectionsRequest{
 		Uid:             uc.Uid,
-		Biz:             interactv1.Biz_Course,
+		Biz:             collectv1.Biz_Course,
 		CurCollectionId: req.CurCollectionId,
 		Limit:           req.Limit,
 	})
@@ -360,10 +362,10 @@ func (h *CourseHandler) ListCollectionMine(ctx *gin.Context, req CourseListColle
 		}, err
 	}
 	courseVos := slice.Map(res.GetCollections(),
-		func(idx int, src *interactv1.Collection) CollectedCourseVo {
+		func(idx int, src *collectv1.Collection) CollectedCourseVo {
 			return CollectedCourseVo{
 				Id:           src.GetBizId(),
-				CollectionId: src.GetCollectionId(),
+				CollectionId: src.GetId(),
 			}
 		})
 	var eg errgroup.Group
@@ -405,9 +407,9 @@ func (h *CourseHandler) ListCollectionMine(ctx *gin.Context, req CourseListColle
 }
 
 func (h *CourseHandler) CountCollectionMine(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
-	res, err := h.interact.CountCollections(ctx, &interactv1.CountCollectionsRequest{
+	res, err := h.collect.CountCollections(ctx, &collectv1.CountCollectionsRequest{
 		Uid: uc.Uid,
-		Biz: interactv1.Biz_Course,
+		Biz: collectv1.Biz_Course,
 	})
 	if err != nil {
 		return ginx.Result{
