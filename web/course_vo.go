@@ -73,3 +73,7 @@ type CollectedCourseVo struct {
 	Credit         float32 `json:"credit"`
 	IsCollected    bool    `json:"is_collected"`
 }
+
+type CourseCollectReq struct {
+	Collect bool `json:"collect"`
+}

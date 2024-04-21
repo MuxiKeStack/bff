@@ -1,4 +1,77 @@
 definitions:
+  evaluation.EndorseReq:
+    properties:
+      stance:
+        type: integer
+    type: object
+  evaluation.EvaluationVo:
+    properties:
+      assessments:
+        description: 考核方式，支持多选
+        items:
+          type: string
+        type: array
+      content:
+        type: string
+      course_id:
+        type: integer
+      ctime:
+        type: integer
+      features:
+        description: 课程特点，支持多选
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      publisher_id:
+        type: integer
+      stance:
+        type: integer
+      star_rating:
+        type: integer
+      status:
+        type: string
+      total_comment_count:
+        type: integer
+      total_oppose_count:
+        type: integer
+      total_support_count:
+        type: integer
+      utime:
+        type: integer
+    type: object
+  evaluation.SaveReq:
+    properties:
+      assessments:
+        description: 考核方式，支持多选
+        items:
+          type: string
+        type: array
+      content:
+        description: 评价的内容
+        type: string
+      course_id:
+        type: integer
+      features:
+        description: 课程特点，支持多选
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      star_rating:
+        description: 1，2，3，4，5
+        type: integer
+      status:
+        description: 可见性：Public/Private
+        type: string
+    type: object
+  evaluation.UpdateStatusReq:
+    properties:
+      status:
+        type: string
+    type: object
   ginx.Result:
     properties:
       code:
@@ -7,6 +80,27 @@ definitions:
       data: {}
       msg:
         description: 错误或成功 描述
+        type: string
+    type: object
+  web.CollectedCourseVo:
+    properties:
+      collection_id:
+        type: integer
+      composite_score:
+        type: number
+      credit:
+        type: number
+      id:
+        type: integer
+      is_collected:
+        type: boolean
+      name:
+        type: string
+      school:
+        type: string
+      teacher:
+        type: string
+      type:
         type: string
     type: object
   web.CommentPublishReq:
@@ -45,6 +139,11 @@ definitions:
       utime:
         type: integer
     type: object
+  web.CourseCollectReq:
+    properties:
+      collect:
+        type: boolean
+    type: object
   web.CourseTagsVo:
     properties:
       assessments:
@@ -56,66 +155,6 @@ definitions:
         additionalProperties:
           type: integer
         type: object
-    type: object
-  web.EvaluationSaveReq:
-    properties:
-      assessments:
-        description: 考核方式，支持多选
-        items:
-          type: string
-        type: array
-      content:
-        description: 评价的内容
-        type: string
-      course_id:
-        type: integer
-      features:
-        description: 课程特点，支持多选
-        items:
-          type: string
-        type: array
-      id:
-        type: integer
-      star_rating:
-        description: 1，2，3，4，5
-        type: integer
-      status:
-        description: 可见性：Public/Private
-        type: string
-    type: object
-  web.EvaluationUpdateStatusReq:
-    properties:
-      status:
-        type: string
-    type: object
-  web.EvaluationVo:
-    properties:
-      assessments:
-        description: 考核方式，支持多选
-        items:
-          type: string
-        type: array
-      content:
-        type: string
-      course_id:
-        type: integer
-      ctime:
-        type: integer
-      features:
-        description: 课程特点，支持多选
-        items:
-          type: string
-        type: array
-      id:
-        type: integer
-      publisher_id:
-        type: integer
-      star_rating:
-        type: integer
-      status:
-        type: string
-      utime:
-        type: integer
     type: object
   web.Grade:
     properties:
@@ -174,16 +213,27 @@ definitions:
     type: object
   web.PublicCourseVo:
     properties:
+      assessments:
+        additionalProperties:
+          type: integer
+        description: 标签:数量
+        type: object
       composite_score:
         type: number
       credit:
         type: number
+      features:
+        additionalProperties:
+          type: integer
+        type: object
       grades:
         items:
           $ref: '#/definitions/web.Grade'
         type: array
       id:
         type: integer
+      is_collected:
+        type: boolean
       name:
         type: string
       school:
@@ -411,6 +461,38 @@ paths:
       summary: 评论列表[二级]
       tags:
       - 评论
+  /courses/{courseId}/collect:
+    post:
+      consumes:
+      - application/json
+      description: 根据课程ID，收藏或取消收藏指定课程
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: integer
+      - description: 收藏或取消收藏的请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/web.CourseCollectReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: 课程收藏和取消
+      tags:
+      - 课程
   /courses/{courseId}/detail:
     get:
       consumes:
@@ -461,6 +543,59 @@ paths:
                   $ref: '#/definitions/web.CourseTagsVo'
               type: object
       summary: 获取课程标签
+      tags:
+      - 课程
+  /courses/collections/count/mine:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户收藏的课程数量
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回收藏数量
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      summary: 我的收藏数量
+      tags:
+      - 课程
+  /courses/collections/list/mine:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户收藏的课程列表，可以分页
+      parameters:
+      - description: 当前收藏项的ID，用于分页
+        in: query
+        name: cur_collection_id
+        required: true
+        type: integer
+      - description: 每页数量限制
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回收藏列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.CollectedCourseVo'
+                  type: array
+              type: object
+      summary: 我的收藏列表
       tags:
       - 课程
   /courses/list/mine:
@@ -515,9 +650,41 @@ paths:
             - $ref: '#/definitions/ginx.Result'
             - properties:
                 data:
-                  $ref: '#/definitions/web.EvaluationVo'
+                  $ref: '#/definitions/evaluation.EvaluationVo'
               type: object
       summary: 课评详情
+      tags:
+      - 课评
+  /evaluations/{evaluationId}/endorse:
+    post:
+      consumes:
+      - application/json
+      description: 根据评价ID支持或反对指定的评价
+      parameters:
+      - description: 评价ID
+        in: path
+        name: evaluationId
+        required: true
+        type: integer
+      - description: 支持或反对的请求体，stance为态度标识，-1反对，1支持，0表示无可用于取消表态
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/evaluation.EndorseReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: 支持或反对课评
       tags:
       - 课评
   /evaluations/{evaluationId}/status:
@@ -530,7 +697,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/web.EvaluationUpdateStatusReq'
+          $ref: '#/definitions/evaluation.UpdateStatusReq'
       produces:
       - application/json
       responses:
@@ -623,7 +790,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/web.EvaluationVo'
+                    $ref: '#/definitions/evaluation.EvaluationVo'
                   type: array
               type: object
       summary: 课评列表[广场]
@@ -661,7 +828,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/web.EvaluationVo'
+                    $ref: '#/definitions/evaluation.EvaluationVo'
                   type: array
               type: object
       summary: 课评列表[指定课程]
@@ -704,7 +871,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/web.EvaluationVo'
+                    $ref: '#/definitions/evaluation.EvaluationVo'
                   type: array
               type: object
       summary: 课评列表[我的历史]
@@ -720,7 +887,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/web.EvaluationSaveReq'
+          $ref: '#/definitions/evaluation.SaveReq'
       produces:
       - application/json
       responses:

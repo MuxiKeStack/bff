@@ -45,8 +45,7 @@ func (h *EvaluationHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Han
 	eg.GET("/count/courses/:courseId/invisible", ginx.Wrap(h.CountCourseInvisible))
 	eg.GET("/count/mine", authMiddleware, ginx.WrapClaimsAndReq(h.CountMine))
 	eg.GET("/:evaluationId/detail", authMiddleware, ginx.WrapClaims(h.Detail))
-
-	eg.POST("/:evaluationId/endorse", ginx.WrapClaimsAndReq(h.Endorse))
+	eg.POST("/:evaluationId/endorse", authMiddleware, ginx.WrapClaimsAndReq(h.Endorse))
 }
 
 // @Summary 发布课评

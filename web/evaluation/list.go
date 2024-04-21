@@ -92,6 +92,13 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 			return nil
 		})
 	}
+	err = eg.Wait()
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
 	// 要聚合评论数，支持反对数，是否支持了
 	return ginx.Result{
 		Msg:  "Success",
@@ -280,6 +287,13 @@ func (h *EvaluationHandler) ListMine(ctx *gin.Context, req ListMineReq, uc ijwt.
 			evaluationVos[i].TotalCommentCount = countCommentRes.GetCount()
 			return nil
 		})
+	}
+	err = eg.Wait()
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
 	}
 	// 要聚合评论数，支持反对数，是否支持了
 	return ginx.Result{

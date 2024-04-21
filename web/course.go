@@ -313,6 +313,15 @@ func (h *CourseHandler) Tags(ctx *gin.Context) (ginx.Result, error) {
 	}, nil
 }
 
+// @Summary 课程收藏和取消
+// @Description 根据课程ID，收藏或取消收藏指定课程
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Param courseId path integer true "课程ID"
+// @Param body body CourseCollectReq true "收藏或取消收藏的请求体"
+// @Success 200 {object} ginx.Result{data=nil} "操作成功"
+// @Router /courses/{courseId}/collect [post]
 func (h *CourseHandler) Collect(ctx *gin.Context, req CourseCollectReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	cidStr := ctx.Param("courseId")
 	cid, err := strconv.ParseInt(cidStr, 10, 64)
@@ -348,6 +357,15 @@ func (h *CourseHandler) Collect(ctx *gin.Context, req CourseCollectReq, uc ijwt.
 	}, nil
 }
 
+// @Summary 我的收藏列表
+// @Description 获取用户收藏的课程列表，可以分页
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Param cur_collection_id query integer true "当前收藏项的ID，用于分页"
+// @Param limit query integer true "每页数量限制"
+// @Success 200 {object} ginx.Result{data=[]CollectedCourseVo} "成功返回收藏列表"
+// @Router /courses/collections/list/mine [get]
 func (h *CourseHandler) ListCollectionMine(ctx *gin.Context, req CourseListCollectionMineReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	res, err := h.collect.ListCollections(ctx, &collectv1.ListCollectionsRequest{
 		Uid:             uc.Uid,
@@ -406,6 +424,13 @@ func (h *CourseHandler) ListCollectionMine(ctx *gin.Context, req CourseListColle
 	}, nil
 }
 
+// @Summary 我的收藏数量
+// @Description 获取用户收藏的课程数量
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Success 200 {object} ginx.Result{data=int64} "成功返回收藏数量"
+// @Router /courses/collections/count/mine [get]
 func (h *CourseHandler) CountCollectionMine(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
 	res, err := h.collect.CountCollections(ctx, &collectv1.CountCollectionsRequest{
 		Uid: uc.Uid,

@@ -257,6 +257,95 @@ const docTemplate = `{
                 }
             }
         },
+        "/courses/collections/count/mine": {
+            "get": {
+                "description": "获取用户收藏的课程数量",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "我的收藏数量",
+                "responses": {
+                    "200": {
+                        "description": "成功返回收藏数量",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/collections/list/mine": {
+            "get": {
+                "description": "获取用户收藏的课程列表，可以分页",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "我的收藏列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前收藏项的ID，用于分页",
+                        "name": "cur_collection_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页数量限制",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回收藏列表",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.CollectedCourseVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/courses/list/mine": {
             "get": {
                 "description": "获取用户的课程列表",
@@ -300,6 +389,59 @@ const docTemplate = `{
                                             "items": {
                                                 "$ref": "#/definitions/web.ProfileCourseVo"
                                             }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/courses/{courseId}/collect": {
+            "post": {
+                "description": "根据课程ID，收藏或取消收藏指定课程",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "课程收藏和取消",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "收藏或取消收藏的请求体",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.CourseCollectReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "操作成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
                                         }
                                     }
                                 }
@@ -533,7 +675,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/web.EvaluationVo"
+                                                "$ref": "#/definitions/evaluation.EvaluationVo"
                                             }
                                         }
                                     }
@@ -594,7 +736,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/web.EvaluationVo"
+                                                "$ref": "#/definitions/evaluation.EvaluationVo"
                                             }
                                         }
                                     }
@@ -662,7 +804,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/web.EvaluationVo"
+                                                "$ref": "#/definitions/evaluation.EvaluationVo"
                                             }
                                         }
                                     }
@@ -692,7 +834,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.EvaluationSaveReq"
+                            "$ref": "#/definitions/evaluation.SaveReq"
                         }
                     }
                 ],
@@ -752,7 +894,60 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/web.EvaluationVo"
+                                            "$ref": "#/definitions/evaluation.EvaluationVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/evaluations/{evaluationId}/endorse": {
+            "post": {
+                "description": "根据评价ID支持或反对指定的评价",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课评"
+                ],
+                "summary": "支持或反对课评",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "评价ID",
+                        "name": "evaluationId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "支持或反对的请求体，stance为态度标识，-1反对，1支持，0表示无可用于取消表态",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/evaluation.EndorseReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "操作成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
                                         }
                                     }
                                 }
@@ -781,7 +976,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.EvaluationUpdateStatusReq"
+                            "$ref": "#/definitions/evaluation.UpdateStatusReq"
                         }
                     }
                 ],
@@ -1171,6 +1366,114 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "evaluation.EndorseReq": {
+            "type": "object",
+            "properties": {
+                "stance": {
+                    "type": "integer"
+                }
+            }
+        },
+        "evaluation.EvaluationVo": {
+            "type": "object",
+            "properties": {
+                "assessments": {
+                    "description": "考核方式，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "content": {
+                    "type": "string"
+                },
+                "course_id": {
+                    "type": "integer"
+                },
+                "ctime": {
+                    "type": "integer"
+                },
+                "features": {
+                    "description": "课程特点，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "publisher_id": {
+                    "type": "integer"
+                },
+                "stance": {
+                    "type": "integer"
+                },
+                "star_rating": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_comment_count": {
+                    "type": "integer"
+                },
+                "total_oppose_count": {
+                    "type": "integer"
+                },
+                "total_support_count": {
+                    "type": "integer"
+                },
+                "utime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "evaluation.SaveReq": {
+            "type": "object",
+            "properties": {
+                "assessments": {
+                    "description": "考核方式，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "content": {
+                    "description": "评价的内容",
+                    "type": "string"
+                },
+                "course_id": {
+                    "type": "integer"
+                },
+                "features": {
+                    "description": "课程特点，支持多选",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "star_rating": {
+                    "description": "1，2，3，4，5",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "可见性：Public/Private",
+                    "type": "string"
+                }
+            }
+        },
+        "evaluation.UpdateStatusReq": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "ginx.Result": {
             "type": "object",
             "properties": {
@@ -1181,6 +1484,38 @@ const docTemplate = `{
                 "data": {},
                 "msg": {
                     "description": "错误或成功 描述",
+                    "type": "string"
+                }
+            }
+        },
+        "web.CollectedCourseVo": {
+            "type": "object",
+            "properties": {
+                "collection_id": {
+                    "type": "integer"
+                },
+                "composite_score": {
+                    "type": "number"
+                },
+                "credit": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_collected": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "school": {
+                    "type": "string"
+                },
+                "teacher": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }
@@ -1240,6 +1575,14 @@ const docTemplate = `{
                 }
             }
         },
+        "web.CourseCollectReq": {
+            "type": "object",
+            "properties": {
+                "collect": {
+                    "type": "boolean"
+                }
+            }
+        },
         "web.CourseTagsVo": {
             "type": "object",
             "properties": {
@@ -1255,94 +1598,6 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "integer"
                     }
-                }
-            }
-        },
-        "web.EvaluationSaveReq": {
-            "type": "object",
-            "properties": {
-                "assessments": {
-                    "description": "考核方式，支持多选",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "content": {
-                    "description": "评价的内容",
-                    "type": "string"
-                },
-                "course_id": {
-                    "type": "integer"
-                },
-                "features": {
-                    "description": "课程特点，支持多选",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "star_rating": {
-                    "description": "1，2，3，4，5",
-                    "type": "integer"
-                },
-                "status": {
-                    "description": "可见性：Public/Private",
-                    "type": "string"
-                }
-            }
-        },
-        "web.EvaluationUpdateStatusReq": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.EvaluationVo": {
-            "type": "object",
-            "properties": {
-                "assessments": {
-                    "description": "考核方式，支持多选",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "content": {
-                    "type": "string"
-                },
-                "course_id": {
-                    "type": "integer"
-                },
-                "ctime": {
-                    "type": "integer"
-                },
-                "features": {
-                    "description": "课程特点，支持多选",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "publisher_id": {
-                    "type": "integer"
-                },
-                "star_rating": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "utime": {
-                    "type": "integer"
                 }
             }
         },
@@ -1432,11 +1687,24 @@ const docTemplate = `{
         "web.PublicCourseVo": {
             "type": "object",
             "properties": {
+                "assessments": {
+                    "description": "标签:数量",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
                 "composite_score": {
                     "type": "number"
                 },
                 "credit": {
                     "type": "number"
+                },
+                "features": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
                 },
                 "grades": {
                     "type": "array",
@@ -1446,6 +1714,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_collected": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
