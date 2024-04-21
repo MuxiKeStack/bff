@@ -64,7 +64,7 @@ type CourseListCollectionMineReq struct {
 
 type CollectedCourseVo struct {
 	Id             int64   `json:"id"`
-	CollectionId   int64   `json:"collection_id"`
+	CourseId       int64   `json:"course_id"`
 	Name           string  `json:"name"`
 	Teacher        string  `json:"teacher"`
 	School         string  `json:"school"`

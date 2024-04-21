@@ -1491,11 +1491,11 @@ const docTemplate = `{
         "web.CollectedCourseVo": {
             "type": "object",
             "properties": {
-                "collection_id": {
-                    "type": "integer"
-                },
                 "composite_score": {
                     "type": "number"
+                },
+                "course_id": {
+                    "type": "integer"
                 },
                 "credit": {
                     "type": "number"

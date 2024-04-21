@@ -382,21 +382,21 @@ func (h *CourseHandler) ListCollectionMine(ctx *gin.Context, req CourseListColle
 	courseVos := slice.Map(res.GetCollections(),
 		func(idx int, src *collectv1.Collection) CollectedCourseVo {
 			return CollectedCourseVo{
-				Id:           src.GetBizId(),
-				CollectionId: src.GetId(),
+				Id:       src.GetId(),
+				CourseId: src.GetBizId(),
 			}
 		})
 	var eg errgroup.Group
 	for i, c := range courseVos {
 		eg.Go(func() error {
 			detailRes, er := h.course.GetDetailById(ctx, &coursev1.GetDetailByIdRequest{
-				CourseId: c.Id,
+				CourseId: c.CourseId,
 			})
 			if er != nil {
 				return er
 			}
 			scoreRes, er := h.evaluation.CompositeScoreCourse(ctx, &evaluationv1.CompositeScoreCourseRequest{
-				CourseId: c.Id,
+				CourseId: c.CourseId,
 			})
 			if er != nil {
 				return er
