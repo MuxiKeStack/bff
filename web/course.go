@@ -219,6 +219,7 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 			Teacher:        detailRes.GetCourse().GetTeacher(),
 			School:         detailRes.GetCourse().GetSchool(),
 			CompositeScore: scoreRes.GetScore(),
+			RaterCount:     scoreRes.GetRaterCount(),
 			Property:       detailRes.GetCourse().GetProperty().String(),
 			Credit:         detailRes.GetCourse().GetCredit(),
 			Assessments: slice.ToMapV(caRes.GetItems(), func(element *tagv1.CountAssessmentItem) (string, int64) {

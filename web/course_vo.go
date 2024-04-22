@@ -20,6 +20,7 @@ type PublicCourseVo struct {
 	Teacher        string           `json:"teacher"`
 	School         string           `json:"school"`
 	CompositeScore float64          `json:"composite_score"`
+	RaterCount     int64            `json:"rater_count"`
 	Property       string           `json:"type"`
 	Credit         float32          `json:"credit"`
 	Assessments    map[string]int64 `json:"assessments"` // 标签:数量
