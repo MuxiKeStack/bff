@@ -29,6 +29,9 @@ grpc:
       endpoint: "discovery:///stance"
     collect:
       endpoint: "discovery:///collect"
+    search:
+      endpoint: "discovery:///search"
+
 
 
 jwt:

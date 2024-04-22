@@ -11,6 +11,7 @@ import (
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web"
 	"github.com/MuxiKeStack/bff/web/evaluation"
+	"github.com/MuxiKeStack/bff/web/search"
 )
 
 // Injectors from wire.go:
@@ -34,6 +35,8 @@ func InitWebServer() *ginx.Server {
 	commentServiceClient := ioc.InitCommentClient(client)
 	evaluationHandler := evaluation.NewEvaluationHandler(evaluationServiceClient, tagServiceClient, stanceServiceClient, commentServiceClient)
 	commentHandler := web.NewCommentHandler(commentServiceClient)
-	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler)
+	searchServiceClient := ioc.InitSearchClient(client)
+	searchHandler := search.NewSearchHandler(searchServiceClient)
+	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler)
 	return server
 }

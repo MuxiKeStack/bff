@@ -30,3 +30,7 @@ const (
 const (
 	CommentInvalidInput = 405001
 )
+
+const (
+	SearchInvalidInput = 406001
+)
