@@ -21,3 +21,12 @@ type HistoryVo struct {
 	Id      int64  `json:"id"`
 	Keyword string `json:"keyword"`
 }
+
+type CourseVo struct {
+	Id             int64            `json:"id"`
+	Name           string           `json:"name"`
+	Teacher        string           `json:"teacher"`
+	CompositeScore float64          `json:"composite_score"`
+	Assessments    map[string]int64 `json:"assessments"` // 标签:数量
+	Features       map[string]int64 `json:"features"`
+}

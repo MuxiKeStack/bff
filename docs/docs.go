@@ -1233,7 +1233,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/searchv1.Course"
+                                                "$ref": "#/definitions/search.CourseVo"
                                             }
                                         }
                                     }
@@ -1628,6 +1628,36 @@ const docTemplate = `{
                 }
             }
         },
+        "search.CourseVo": {
+            "type": "object",
+            "properties": {
+                "assessments": {
+                    "description": "标签:数量",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "composite_score": {
+                    "type": "number"
+                },
+                "features": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "teacher": {
+                    "type": "string"
+                }
+            }
+        },
         "search.DeleteHistoryReq": {
             "type": "object",
             "properties": {
@@ -1653,23 +1683,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "keyword": {
-                    "type": "string"
-                }
-            }
-        },
-        "searchv1.Course": {
-            "type": "object",
-            "properties": {
-                "composite_score": {
-                    "type": "number"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "teacher": {
                     "type": "string"
                 }
             }

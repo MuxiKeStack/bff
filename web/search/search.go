@@ -3,7 +3,9 @@ package search
 import (
 	"errors"
 	"fmt"
+	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
 	searchv1 "github.com/MuxiKeStack/be-api/gen/proto/search/v1"
+	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web/ijwt"
@@ -23,9 +25,14 @@ func (h *SearchHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handler
 	sg.PUT("/history", authMiddleware, ginx.WrapClaimsAndReq(h.DeleteHistory)) // 删除历史记录
 }
 
-func NewSearchHandler(client searchv1.SearchServiceClient) *SearchHandler {
+func NewSearchHandler(client searchv1.SearchServiceClient, tagClient tagv1.TagServiceClient,
+	evaluationClient evaluationv1.EvaluationServiceClient) *SearchHandler {
 	strategies := map[string]SearchStrategy{
-		"Course": &CourseSearchStrategy{client: client},
+		"Course": &CourseSearchStrategy{
+			searchClient:     client,
+			tagClient:        tagClient,
+			evaluationClient: evaluationClient,
+		},
 	}
 	return &SearchHandler{
 		client:     client,
@@ -42,7 +49,7 @@ func NewSearchHandler(client searchv1.SearchServiceClient) *SearchHandler {
 // @Param biz query string true "业务类型，Course"
 // @Param keyword query string true "搜索关键词"
 // @Param search_location query string true "搜索位置: Home，Collections"
-// @Success 200 {object} ginx.Result{data=[]searchv1.Course} "返回搜索结果"
+// @Success 200 {object} ginx.Result{data=[]CourseVo} "返回搜索结果"
 // @Router /search [get]
 func (h *SearchHandler) Search(ctx *gin.Context, req SearchReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	if len([]rune(req.Keyword)) > 15 {

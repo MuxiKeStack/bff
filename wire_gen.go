@@ -36,7 +36,7 @@ func InitWebServer() *ginx.Server {
 	evaluationHandler := evaluation.NewEvaluationHandler(evaluationServiceClient, tagServiceClient, stanceServiceClient, commentServiceClient)
 	commentHandler := web.NewCommentHandler(commentServiceClient)
 	searchServiceClient := ioc.InitSearchClient(client)
-	searchHandler := search.NewSearchHandler(searchServiceClient)
+	searchHandler := search.NewSearchHandler(searchServiceClient, tagServiceClient, evaluationServiceClient)
 	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler)
 	return server
 }

@@ -82,6 +82,26 @@ definitions:
         description: 错误或成功 描述
         type: string
     type: object
+  search.CourseVo:
+    properties:
+      assessments:
+        additionalProperties:
+          type: integer
+        description: 标签:数量
+        type: object
+      composite_score:
+        type: number
+      features:
+        additionalProperties:
+          type: integer
+        type: object
+      id:
+        type: integer
+      name:
+        type: string
+      teacher:
+        type: string
+    type: object
   search.DeleteHistoryReq:
     properties:
       remove_all:
@@ -99,17 +119,6 @@ definitions:
       id:
         type: integer
       keyword:
-        type: string
-    type: object
-  searchv1.Course:
-    properties:
-      composite_score:
-        type: number
-      id:
-        type: integer
-      name:
-        type: string
-      teacher:
         type: string
     type: object
   web.CollectedCourseVo:
@@ -1086,7 +1095,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/searchv1.Course'
+                    $ref: '#/definitions/search.CourseVo'
                   type: array
               type: object
       summary: 执行搜索
