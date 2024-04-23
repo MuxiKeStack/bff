@@ -45,6 +45,12 @@ func NewSearchHandler(client searchv1.SearchServiceClient) *SearchHandler {
 // @Success 200 {object} ginx.Result{data=[]searchv1.Course} "返回搜索结果"
 // @Router /search [get]
 func (h *SearchHandler) Search(ctx *gin.Context, req SearchReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	if len([]rune(req.Keyword)) > 15 {
+		return ginx.Result{
+			Code: errs.SearchInvalidInput,
+			Msg:  "搜索长度不应大于15字",
+		}, errors.New("搜索长度过长")
+	}
 	// 可以约束一下boxId
 	strategy, exists := h.strategies[req.Biz]
 	if !exists {
