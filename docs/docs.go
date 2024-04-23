@@ -1183,6 +1183,146 @@ const docTemplate = `{
                 }
             }
         },
+        "/search": {
+            "get": {
+                "description": "根据提供的业务类型和关键词执行搜索操作",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "搜索"
+                ],
+                "summary": "执行搜索",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "业务类型，Course",
+                        "name": "biz",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索关键词",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索位置: Home，Collections",
+                        "name": "search_location",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "返回搜索结果",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/searchv1.Course"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/search/history": {
+            "get": {
+                "description": "返回用户的搜索历史记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "搜索"
+                ],
+                "summary": "获取搜索历史",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "搜索位置: Home，Collections",
+                        "name": "search_location",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "返回搜索历史记录",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/search.HistoryVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "根据请求删除用户的搜索历史记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "搜索"
+                ],
+                "summary": "删除搜索历史",
+                "parameters": [
+                    {
+                        "description": "请求体",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/search.DeleteHistoryReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功删除历史记录",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
         "/users/:userId/profile": {
             "get": {
                 "consumes": [
@@ -1488,6 +1628,52 @@ const docTemplate = `{
                 }
             }
         },
+        "search.DeleteHistoryReq": {
+            "type": "object",
+            "properties": {
+                "remove_all": {
+                    "type": "boolean"
+                },
+                "remove_history_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "search_location": {
+                    "description": "可以是 \"Home\" 或 \"Collections\"",
+                    "type": "string"
+                }
+            }
+        },
+        "search.HistoryVo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "keyword": {
+                    "type": "string"
+                }
+            }
+        },
+        "searchv1.Course": {
+            "type": "object",
+            "properties": {
+                "composite_score": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "teacher": {
+                    "type": "string"
+                }
+            }
+        },
         "web.CollectedCourseVo": {
             "type": "object",
             "properties": {
@@ -1720,6 +1906,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "rater_count": {
+                    "type": "integer"
                 },
                 "school": {
                     "type": "string"

@@ -82,6 +82,36 @@ definitions:
         description: 错误或成功 描述
         type: string
     type: object
+  search.DeleteHistoryReq:
+    properties:
+      remove_all:
+        type: boolean
+      remove_history_ids:
+        items:
+          type: integer
+        type: array
+      search_location:
+        description: 可以是 "Home" 或 "Collections"
+        type: string
+    type: object
+  search.HistoryVo:
+    properties:
+      id:
+        type: integer
+      keyword:
+        type: string
+    type: object
+  searchv1.Course:
+    properties:
+      composite_score:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      teacher:
+        type: string
+    type: object
   web.CollectedCourseVo:
     properties:
       composite_score:
@@ -236,6 +266,8 @@ definitions:
         type: boolean
       name:
         type: string
+      rater_count:
+        type: integer
       school:
         type: string
       teacher:
@@ -1022,6 +1054,93 @@ paths:
       summary: 发布新问题
       tags:
       - 问题
+  /search:
+    get:
+      consumes:
+      - application/json
+      description: 根据提供的业务类型和关键词执行搜索操作
+      parameters:
+      - description: 业务类型，Course
+        in: query
+        name: biz
+        required: true
+        type: string
+      - description: 搜索关键词
+        in: query
+        name: keyword
+        required: true
+        type: string
+      - description: '搜索位置: Home，Collections'
+        in: query
+        name: search_location
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 返回搜索结果
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/searchv1.Course'
+                  type: array
+              type: object
+      summary: 执行搜索
+      tags:
+      - 搜索
+  /search/history:
+    get:
+      consumes:
+      - application/json
+      description: 返回用户的搜索历史记录
+      parameters:
+      - description: '搜索位置: Home，Collections'
+        in: query
+        name: search_location
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 返回搜索历史记录
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/search.HistoryVo'
+                  type: array
+              type: object
+      summary: 获取搜索历史
+      tags:
+      - 搜索
+    put:
+      consumes:
+      - application/json
+      description: 根据请求删除用户的搜索历史记录
+      parameters:
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/search.DeleteHistoryReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功删除历史记录
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 删除搜索历史
+      tags:
+      - 搜索
   /users/:userId/profile:
     get:
       consumes:
