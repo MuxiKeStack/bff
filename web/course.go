@@ -123,7 +123,7 @@ func (h *CourseHandler) List(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result,
 		}
 		return ginx.Result{
 			Code: errs.UserInvalidSidOrPassword,
-			Msg:  "学号或密码错误，账号已登出",
+			Msg:  "登录失效，账号已登出",
 		}, nil
 	default:
 		return ginx.Result{

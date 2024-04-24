@@ -60,7 +60,7 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 	case ccnuv1.IsInvalidSidOrPwd(err):
 		return ginx.Result{
 			Code: errs.UserInvalidSidOrPassword,
-			Msg:  "学号或密码错误",
+			Msg:  "登录失效，请重新登录",
 		}, nil
 	default:
 		return ginx.Result{
@@ -192,7 +192,7 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 	var (
 		eg        errgroup.Group
 		userRes   *userv1.ProfileResponse
-		statusRes *gradev1.GetSignupStatusResponse
+		statusRes *gradev1.GetSignStatusResponse
 	)
 	eg.Go(func() error {
 		var er error
@@ -201,7 +201,7 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 	})
 	eg.Go(func() error {
 		var er error
-		statusRes, er = h.gradeSvc.GetSignupStatus(ctx, &gradev1.GetSignupStatusRequest{Uid: uc.Uid})
+		statusRes, er = h.gradeSvc.GetSignStatus(ctx, &gradev1.GetSignStatusRequest{Uid: uc.Uid})
 		return er
 	})
 	err := eg.Wait()
