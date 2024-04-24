@@ -2,27 +2,32 @@ package web
 
 import (
 	ccnuv1 "github.com/MuxiKeStack/be-api/gen/proto/ccnu/v1"
+	gradev1 "github.com/MuxiKeStack/be-api/gen/proto/grade/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/sync/errgroup"
 	"net/http"
 	"strconv"
 )
 
 type UserHandler struct {
 	ijwt.Handler
-	userSvc userv1.UserServiceClient
-	ccnuSvc ccnuv1.CCNUServiceClient
+	userSvc  userv1.UserServiceClient
+	ccnuSvc  ccnuv1.CCNUServiceClient
+	gradeSvc gradev1.GradeServiceClient
 }
 
-func NewUserHandler(hdl ijwt.Handler, userSvc userv1.UserServiceClient, ccnuSvc ccnuv1.CCNUServiceClient) *UserHandler {
+func NewUserHandler(hdl ijwt.Handler, userSvc userv1.UserServiceClient, ccnuSvc ccnuv1.CCNUServiceClient,
+	gradeSvc gradev1.GradeServiceClient) *UserHandler {
 	return &UserHandler{
-		Handler: hdl,
-		userSvc: userSvc,
-		ccnuSvc: ccnuSvc,
+		Handler:  hdl,
+		userSvc:  userSvc,
+		ccnuSvc:  ccnuSvc,
+		gradeSvc: gradeSvc,
 	}
 }
 
@@ -184,23 +189,40 @@ func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims
 // @Success 200 {object} ginx.Result{data=UserProfileVo} "Success"
 // @Router /users/profile [get]
 func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
-	res, err := h.userSvc.Profile(ctx, &userv1.ProfileRequest{Uid: uc.Uid})
+	var (
+		eg        errgroup.Group
+		userRes   *userv1.ProfileResponse
+		statusRes *gradev1.GetSignupStatusResponse
+	)
+	eg.Go(func() error {
+		var er error
+		userRes, er = h.userSvc.Profile(ctx, &userv1.ProfileRequest{Uid: uc.Uid})
+		return er
+	})
+	eg.Go(func() error {
+		var er error
+		statusRes, er = h.gradeSvc.GetSignupStatus(ctx, &gradev1.GetSignupStatusRequest{Uid: uc.Uid})
+		return er
+	})
+	err := eg.Wait()
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
+
 	return ginx.Result{
 		Msg: "Success",
 		Data: UserProfileVo{
-			Id:        res.GetUser().GetId(),
-			StudentId: res.GetUser().GetStudentId(),
-			Avatar:    res.GetUser().GetAvatar(),
-			Nickname:  res.GetUser().GetNickname(),
-			New:       res.GetUser().GetNew(),
-			Utime:     res.GetUser().GetUtime(),
-			Ctime:     res.GetUser().GetCtime(),
+			Id:              userRes.GetUser().GetId(),
+			StudentId:       userRes.GetUser().GetStudentId(),
+			Avatar:          userRes.GetUser().GetAvatar(),
+			Nickname:        userRes.GetUser().GetNickname(),
+			New:             userRes.GetUser().GetNew(),
+			GradeSignStatus: statusRes.GetStatus().String(),
+			Utime:           userRes.GetUser().GetUtime(),
+			Ctime:           userRes.GetUser().GetCtime(),
 		},
 	}, nil
 }
