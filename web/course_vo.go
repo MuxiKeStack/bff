@@ -26,7 +26,6 @@ type PublicCourseVo struct {
 	Assessments    map[string]int64 `json:"assessments"` // 标签:数量
 	Features       map[string]int64 `json:"features"`
 	IsCollected    bool             `json:"is_collected"`
-	Grades         []GradeVo        `json:"grades"`
 }
 
 type InviteUserToAnswerReq struct {

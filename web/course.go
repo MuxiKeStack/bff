@@ -158,7 +158,6 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 		checkRes  *collectv1.CheckCollectionResponse
 		caRes     *tagv1.CountAssessmentTagsByCourseTaggerResponse
 		cfRes     *tagv1.CountFeatureTagsByCourseTaggerResponse
-		gradeRes  *gradev1.GetGradesByCourseIdResponse
 	)
 	eg.Go(func() error {
 		var er error
@@ -208,13 +207,6 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 		})
 		return er
 	})
-	eg.Go(func() error {
-		var er error
-		gradeRes, er = h.grade.GetGradesByCourseId(ctx, &gradev1.GetGradesByCourseIdRequest{
-			CourseId: cid,
-		})
-		return er
-	})
 	err = eg.Wait()
 	if err != nil {
 		return ginx.Result{
@@ -240,15 +232,6 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 				return element.GetTag().String(), element.GetCount()
 			}),
 			IsCollected: checkRes.GetIsCollected(),
-			Grades: slice.Map(gradeRes.GetGrades(), func(idx int, src *gradev1.Grade) GradeVo {
-				return GradeVo{
-					Regular: src.Regular,
-					Final:   src.Final,
-					Total:   src.Total,
-					Year:    src.Year,
-					Term:    src.Term,
-				}
-			}),
 		},
 	}, nil
 }
