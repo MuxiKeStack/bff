@@ -229,15 +229,6 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 				return element.GetTag().String(), element.GetCount()
 			}),
 			IsCollected: checkRes.GetIsCollected(),
-			Grades: slice.Map(detailRes.GetCourse().GetGrades(), func(idx int, src *coursev1.Grade) Grade {
-				return Grade{
-					Regular: src.GetRegular(),
-					Final:   src.GetFinal(),
-					Total:   src.GetTotal(),
-					Year:    src.GetYear(),
-					Term:    src.GetTerm(),
-				}
-			}),
 		},
 	}, nil
 }

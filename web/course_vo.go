@@ -26,15 +26,6 @@ type PublicCourseVo struct {
 	Assessments    map[string]int64 `json:"assessments"` // 标签:数量
 	Features       map[string]int64 `json:"features"`
 	IsCollected    bool             `json:"is_collected"`
-	Grades         []Grade          `json:"grades"`
-}
-
-type Grade struct {
-	Regular float32 `json:"regular"`
-	Final   float32 `json:"final"`
-	Total   float32 `json:"total"`
-	Year    string  `json:"year"`
-	Term    string  `json:"term"`
 }
 
 type GradeVo struct {
