@@ -31,7 +31,8 @@ grpc:
       endpoint: "discovery:///collect"
     search:
       endpoint: "discovery:///search"
-
+    grade:
+      endpoint: "discovery:///grade"
 
 
 jwt:
