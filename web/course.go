@@ -5,6 +5,7 @@ import (
 	collectv1 "github.com/MuxiKeStack/be-api/gen/proto/collect/v1"
 	coursev1 "github.com/MuxiKeStack/be-api/gen/proto/course/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
+	gradev1 "github.com/MuxiKeStack/be-api/gen/proto/grade/v1"
 	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
@@ -24,12 +25,13 @@ type CourseHandler struct {
 	user       userv1.UserServiceClient
 	tag        tagv1.TagServiceClient
 	collect    collectv1.CollectServiceClient
+	grade      gradev1.GradeServiceClient
 	l          logger.Logger
 }
 
 func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
-	evaluation evaluationv1.EvaluationServiceClient, user userv1.UserServiceClient,
-	tag tagv1.TagServiceClient, l logger.Logger, collect collectv1.CollectServiceClient) *CourseHandler {
+	evaluation evaluationv1.EvaluationServiceClient, user userv1.UserServiceClient, tag tagv1.TagServiceClient,
+	l logger.Logger, collect collectv1.CollectServiceClient, grade gradev1.GradeServiceClient) *CourseHandler {
 	return &CourseHandler{
 		Handler:    handler,
 		course:     course,
@@ -37,6 +39,7 @@ func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
 		user:       user,
 		tag:        tag,
 		collect:    collect,
+		grade:      grade,
 		l:          l,
 	}
 }
@@ -155,6 +158,7 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 		checkRes  *collectv1.CheckCollectionResponse
 		caRes     *tagv1.CountAssessmentTagsByCourseTaggerResponse
 		cfRes     *tagv1.CountFeatureTagsByCourseTaggerResponse
+		gradeRes  *gradev1.GetGradesByCourseIdResponse
 	)
 	eg.Go(func() error {
 		var er error
@@ -204,6 +208,13 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 		})
 		return er
 	})
+	eg.Go(func() error {
+		var er error
+		gradeRes, er = h.grade.GetGradesByCourseId(ctx, &gradev1.GetGradesByCourseIdRequest{
+			CourseId: cid,
+		})
+		return er
+	})
 	err = eg.Wait()
 	if err != nil {
 		return ginx.Result{
@@ -229,6 +240,15 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 				return element.GetTag().String(), element.GetCount()
 			}),
 			IsCollected: checkRes.GetIsCollected(),
+			Grades: slice.Map(gradeRes.GetGrades(), func(idx int, src *gradev1.Grade) GradeVo {
+				return GradeVo{
+					Regular: src.Regular,
+					Final:   src.Final,
+					Total:   src.Total,
+					Year:    src.Year,
+					Term:    src.Term,
+				}
+			}),
 		},
 	}, nil
 }
