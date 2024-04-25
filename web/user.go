@@ -211,18 +211,17 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 			Msg:  "系统异常",
 		}, err
 	}
-
 	return ginx.Result{
 		Msg: "Success",
 		Data: UserProfileVo{
-			Id:              userRes.GetUser().GetId(),
-			StudentId:       userRes.GetUser().GetStudentId(),
-			Avatar:          userRes.GetUser().GetAvatar(),
-			Nickname:        userRes.GetUser().GetNickname(),
-			New:             userRes.GetUser().GetNew(),
-			GradeSignStatus: statusRes.GetStatus().String(),
-			Utime:           userRes.GetUser().GetUtime(),
-			Ctime:           userRes.GetUser().GetCtime(),
+			Id:                   userRes.GetUser().GetId(),
+			StudentId:            userRes.GetUser().GetStudentId(),
+			Avatar:               userRes.GetUser().GetAvatar(),
+			Nickname:             userRes.GetUser().GetNickname(),
+			New:                  userRes.GetUser().GetNew(),
+			GradeSharingIsSigned: statusRes.GetIsSigned(),
+			Utime:                userRes.GetUser().GetUtime(),
+			Ctime:                userRes.GetUser().GetCtime(),
 		},
 	}, nil
 }
