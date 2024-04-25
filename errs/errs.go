@@ -34,3 +34,8 @@ const (
 const (
 	SearchInvalidInput = 406001
 )
+
+const (
+	GradeRepeatSigning = 407001
+	GradeNotSigned     = 407002
+)
