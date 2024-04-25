@@ -495,6 +495,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/courses/{courseId}/simple_detail": {
+            "get": {
+                "description": "根据课程ID获取课程信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "课程"
+                ],
+                "summary": "获取简洁版课程详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.SimplePublicCourseVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/courses/{courseId}/tags": {
             "get": {
                 "description": "包括课程特点和考核方式",
@@ -992,11 +1036,6 @@ const docTemplate = `{
         },
         "/grades/courses/{courseId}": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "description": "根据课程ID获取该课程的成绩详情",
                 "consumes": [
                     "application/json"
@@ -1038,9 +1077,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "400": {
-                        "description": "参数错误或未签约"
                     }
                 }
             }
@@ -2094,6 +2130,29 @@ const docTemplate = `{
             "properties": {
                 "wants_to_sign": {
                     "type": "boolean"
+                }
+            }
+        },
+        "web.SimplePublicCourseVo": {
+            "type": "object",
+            "properties": {
+                "credit": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "school": {
+                    "type": "string"
+                },
+                "teacher": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },

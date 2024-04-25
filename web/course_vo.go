@@ -14,6 +14,15 @@ type ProfileCourseVo struct {
 	Term      string `json:"term"` // 学年，1/2/3
 }
 
+type SimplePublicCourseVo struct {
+	Id       int64   `json:"id"`
+	Name     string  `json:"name"`
+	Teacher  string  `json:"teacher"`
+	School   string  `json:"school"`
+	Property string  `json:"type"`
+	Credit   float64 `json:"credit"`
+}
+
 type PublicCourseVo struct {
 	Id             int64            `json:"id"`
 	Name           string           `json:"name"`

@@ -320,6 +320,21 @@ definitions:
       wants_to_sign:
         type: boolean
     type: object
+  web.SimplePublicCourseVo:
+    properties:
+      credit:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      school:
+        type: string
+      teacher:
+        type: string
+      type:
+        type: string
+    type: object
   web.UserEditReq:
     properties:
       avatar:
@@ -566,6 +581,32 @@ paths:
                   $ref: '#/definitions/web.PublicCourseVo'
               type: object
       summary: 获取课程详情
+      tags:
+      - 课程
+  /courses/{courseId}/simple_detail:
+    get:
+      consumes:
+      - application/json
+      description: 根据课程ID获取课程信息
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.SimplePublicCourseVo'
+              type: object
+      summary: 获取简洁版课程详情
       tags:
       - 课程
   /courses/{courseId}/tags:
@@ -977,10 +1018,6 @@ paths:
                     $ref: '#/definitions/web.GradeVo'
                   type: array
               type: object
-        "400":
-          description: 参数错误或未签约
-      security:
-      - ApiKeyAuth: []
       summary: 获取课程成绩分布
       tags:
       - 成绩

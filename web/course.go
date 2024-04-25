@@ -45,6 +45,7 @@ func (h *CourseHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handler
 	cg := s.Group("/courses")
 	cg.GET("/list/mine", authMiddleware, ginx.WrapClaims(h.List))
 	cg.GET("/:courseId/detail", authMiddleware, ginx.WrapClaims(h.Detail))
+	cg.GET("/:courseId/simple_detail", ginx.Wrap(h.SimpleDetail))
 	cg.GET("/:courseId/tags", ginx.Wrap(h.Tags))                                    // 冗余接口，
 	cg.POST("/:courseId/collect", authMiddleware, ginx.WrapClaimsAndReq(h.Collect)) // 收藏或取消收藏
 	cg.GET("/collections/list/mine", authMiddleware, ginx.WrapClaimsAndReq(h.ListCollectionMine))
@@ -229,6 +230,45 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 				return element.GetTag().String(), element.GetCount()
 			}),
 			IsCollected: checkRes.GetIsCollected(),
+		},
+	}, nil
+}
+
+// @Summary 获取简洁版课程详情
+// @Description 根据课程ID获取课程信息
+// @Tags 课程
+// @Accept json
+// @Produce json
+// @Param courseId path integer true "课程ID"
+// @Success 200 {object} ginx.Result{data=SimplePublicCourseVo} "Success"
+// @Router /courses/{courseId}/simple_detail [get]
+func (h *CourseHandler) SimpleDetail(ctx *gin.Context) (ginx.Result, error) {
+	cidStr := ctx.Param("courseId")
+	cid, err := strconv.ParseInt(cidStr, 10, 64)
+	if err != nil {
+		return ginx.Result{
+			Code: errs.CourseInvalidInput,
+			Msg:  "输入参数有误",
+		}, err
+	}
+	detailRes, err := h.course.GetDetailById(ctx, &coursev1.GetDetailByIdRequest{
+		CourseId: cid,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+		Data: SimplePublicCourseVo{
+			Id:       detailRes.GetCourse().GetId(),
+			Name:     detailRes.GetCourse().GetName(),
+			Teacher:  detailRes.GetCourse().GetTeacher(),
+			School:   detailRes.GetCourse().GetSchool(),
+			Property: detailRes.GetCourse().GetProperty().String(),
+			Credit:   detailRes.GetCourse().GetCredit(),
 		},
 	}, nil
 }
