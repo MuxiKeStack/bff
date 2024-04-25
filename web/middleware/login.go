@@ -17,7 +17,7 @@ type LoginMiddlewareBuilder struct {
 
 func NewLoginMiddleWareBuilder(hdl ijwt.Handler) *LoginMiddlewareBuilder {
 	s := set.NewMapSet[string](3)
-	s.Add("/evaluations/list/recent")
+	s.Add("/evaluations/list/all")
 	l := &LoginMiddlewareBuilder{
 		allowRestrictedAccessPaths: s,
 		Handler:                    hdl,
@@ -30,7 +30,6 @@ func (m *LoginMiddlewareBuilder) allowRestrictedAccess(path string) bool {
 		return true
 	}
 	parts := strings.Split(strings.Trim(path, "/"), "/")
-	// todo check
 	if len(parts) == 3 && parts[0] == "evaluations" && parts[2] == "detail" {
 		return true
 	}
@@ -44,7 +43,7 @@ func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 		if err == nil {
 			ctx.Set("user", uc)
 		} else {
-			if m.allowRestrictedAccessPaths.Exist(ctx.Request.URL.Path) {
+			if m.allowRestrictedAccess(ctx.Request.URL.Path) {
 				ctx.Set("user", uc)
 			} else {
 				ctx.AbortWithStatus(http.StatusUnauthorized)

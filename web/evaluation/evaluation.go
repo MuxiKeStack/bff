@@ -233,49 +233,92 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 	}
 	// 哦不，这里还要去聚合tags，但是似乎不用开分布式事务，因为只存在查询，没什么好事务的
 	var (
-		eg              errgroup.Group
-		atRes           *tagv1.GetAssessmentTagsByTaggerBizResponse
-		ftRes           *tagv1.GetFeatureTagsByTaggerBizResponse
-		stanceRes       *stancev1.GetUserStanceResponse
-		countCommentRes *commentv1.CountCommentResponse
+		eg           errgroup.Group
+		evaluationVo = EvaluationVo{
+			Id:          res.GetEvaluation().GetId(),
+			PublisherId: res.GetEvaluation().GetPublisherId(),
+			CourseId:    res.GetEvaluation().GetCourseId(),
+			StarRating:  res.GetEvaluation().GetStarRating(),
+			Content:     res.GetEvaluation().GetContent(),
+			Status:      res.GetEvaluation().GetStatus().String(),
+			Utime:       res.GetEvaluation().GetUtime(),
+			Ctime:       res.GetEvaluation().GetCtime(),
+		}
 	)
+	// 聚合考核方式
 	eg.Go(func() error {
-		var er error
-		atRes, er = h.tagClient.GetAssessmentTagsByTaggerBiz(ctx, &tagv1.GetAssessmentTagsByTaggerBizRequest{
+		atRes, er := h.tagClient.GetAssessmentTagsByTaggerBiz(ctx, &tagv1.GetAssessmentTagsByTaggerBizRequest{
 			TaggerId: res.GetEvaluation().GetPublisherId(),
 			Biz:      tagv1.Biz_Course,
 			BizId:    res.GetEvaluation().GetCourseId(),
 		})
-		return er
+		if er != nil {
+			return er
+		}
+		evaluationVo.Assessments = slice.Map(atRes.GetTags(), func(idx int, src tagv1.AssessmentTag) string {
+			return src.String()
+		})
+		return nil
 	})
+	// 聚合课程特点
 	eg.Go(func() error {
-		var er error
-		ftRes, er = h.tagClient.GetFeatureTagsByTaggerBiz(ctx, &tagv1.GetFeatureTagsByTaggerBizRequest{
+		ftRes, er := h.tagClient.GetFeatureTagsByTaggerBiz(ctx, &tagv1.GetFeatureTagsByTaggerBizRequest{
 			TaggerId: res.GetEvaluation().GetPublisherId(),
 			Biz:      tagv1.Biz_Course,
 			BizId:    res.GetEvaluation().GetCourseId(),
 		})
-		return er
+		if er != nil {
+			return er
+		}
+		evaluationVo.Features = slice.Map(ftRes.GetTags(), func(idx int, src tagv1.FeatureTag) string {
+			return src.String()
+		})
+		return nil
 	})
 	// 还要聚合interact数据，voting -1、0、1
 	// 支持数，反对数，评论数
-	eg.Go(func() error {
-		var er error
-		stanceRes, er = h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
-			Uid:   uc.Uid,
-			Biz:   stancev1.Biz_Evaluation,
-			BizId: eid,
+	// 聚合表态信息
+	// 设置了可受限访问，所以要区分游客和登录用户
+	if uc.Uid != 0 {
+		eg.Go(func() error {
+			stanceRes, er := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
+				Uid:   uc.Uid,
+				Biz:   stancev1.Biz_Evaluation,
+				BizId: eid,
+			})
+			if er != nil {
+				return er
+			}
+			evaluationVo.Stance = int32(stanceRes.GetStance())
+			evaluationVo.TotalSupportCount = stanceRes.GetTotalSupports()
+			evaluationVo.TotalOpposeCount = stanceRes.GetTotalOpposes()
+			return nil
 		})
-		return er
-	})
+	} else {
+		eg.Go(func() error {
+			countStanceRes, er := h.stanceClient.CountStance(ctx, &stancev1.CountStanceRequest{
+				Biz:   stancev1.Biz_Evaluation,
+				BizId: eid,
+			})
+			if er != nil {
+				return er
+			}
+			evaluationVo.TotalSupportCount = countStanceRes.GetTotalSupports()
+			evaluationVo.TotalOpposeCount = countStanceRes.GetTotalOpposes()
+			return nil
+		})
+	}
+	// 评论数
 	eg.Go(func() error {
-		// 评论数
-		var er error
-		countCommentRes, er = h.commentClient.CountComment(ctx, &commentv1.CountCommentRequest{
+		countCommentRes, er := h.commentClient.CountComment(ctx, &commentv1.CountCommentRequest{
 			Biz:   commentv1.Biz_Evaluation,
 			BizId: eid,
 		})
-		return er
+		if er != nil {
+			return er
+		}
+		evaluationVo.TotalCommentCount = countCommentRes.GetCount()
+		return nil
 	})
 	err = eg.Wait()
 	if err != nil {
@@ -285,26 +328,7 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 		}, err
 	}
 	return ginx.Result{
-		Msg: "Success",
-		Data: EvaluationVo{
-			Id:          res.GetEvaluation().GetId(),
-			PublisherId: res.GetEvaluation().GetPublisherId(),
-			CourseId:    res.GetEvaluation().GetCourseId(),
-			StarRating:  res.GetEvaluation().GetStarRating(),
-			Content:     res.GetEvaluation().GetContent(),
-			Status:      res.GetEvaluation().GetStatus().String(),
-			Assessments: slice.Map(atRes.GetTags(), func(idx int, src tagv1.AssessmentTag) string {
-				return src.String()
-			}),
-			Features: slice.Map(ftRes.GetTags(), func(idx int, src tagv1.FeatureTag) string {
-				return src.String()
-			}),
-			Stance:            int32(stanceRes.GetStance()),
-			TotalSupportCount: stanceRes.GetTotalSupports(),
-			TotalOpposeCount:  stanceRes.GetTotalOpposes(),
-			TotalCommentCount: countCommentRes.GetCount(),
-			Utime:             res.GetEvaluation().GetUtime(),
-			Ctime:             res.GetEvaluation().GetCtime(),
-		},
+		Msg:  "Success",
+		Data: evaluationVo,
 	}, nil
 }

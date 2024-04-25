@@ -70,13 +70,29 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 	var eg errgroup.Group
 	for i := range evaluationVos {
 		eg.Go(func() error {
-			stanceRes, er := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
-				Uid:   uc.Uid,
-				Biz:   stancev1.Biz_Evaluation,
-				BizId: evaluationVos[i].Id,
-			})
-			if er != nil {
-				return er
+			// 因为这个路径被设置为了可以受限访问，也就是游客访问，所以这里做了区分
+			if uc.Uid != 0 {
+				stanceRes, er := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
+					Uid:   uc.Uid,
+					Biz:   stancev1.Biz_Evaluation,
+					BizId: evaluationVos[i].Id,
+				})
+				if er != nil {
+					return er
+				}
+				evaluationVos[i].Stance = int32(stanceRes.GetStance())
+				evaluationVos[i].TotalSupportCount = stanceRes.GetTotalSupports()
+				evaluationVos[i].TotalOpposeCount = stanceRes.GetTotalOpposes()
+			} else {
+				countStanceRes, er := h.stanceClient.CountStance(ctx, &stancev1.CountStanceRequest{
+					Biz:   stancev1.Biz_Evaluation,
+					BizId: evaluationVos[i].Id,
+				})
+				if er != nil {
+					return er
+				}
+				evaluationVos[i].TotalSupportCount = countStanceRes.GetTotalSupports()
+				evaluationVos[i].TotalOpposeCount = countStanceRes.GetTotalOpposes()
 			}
 			countCommentRes, er := h.commentClient.CountComment(ctx, &commentv1.CountCommentRequest{
 				Biz:   commentv1.Biz_Evaluation,
@@ -85,9 +101,6 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 			if er != nil {
 				return er
 			}
-			evaluationVos[i].Stance = int32(stanceRes.GetStance())
-			evaluationVos[i].TotalSupportCount = stanceRes.GetTotalSupports()
-			evaluationVos[i].TotalOpposeCount = stanceRes.GetTotalOpposes()
 			evaluationVos[i].TotalCommentCount = countCommentRes.GetCount()
 			return nil
 		})
