@@ -22,7 +22,7 @@ type PublicCourseVo struct {
 	CompositeScore float64          `json:"composite_score"`
 	RaterCount     int64            `json:"rater_count"`
 	Property       string           `json:"type"`
-	Credit         float32          `json:"credit"`
+	Credit         float64          `json:"credit"`
 	Assessments    map[string]int64 `json:"assessments"` // 标签:数量
 	Features       map[string]int64 `json:"features"`
 	IsCollected    bool             `json:"is_collected"`
@@ -54,7 +54,7 @@ type CollectedCourseVo struct {
 	School         string  `json:"school"`
 	CompositeScore float64 `json:"composite_score"`
 	Property       string  `json:"type"`
-	Credit         float32 `json:"credit"`
+	Credit         float64 `json:"credit"`
 	IsCollected    bool    `json:"is_collected"`
 }
 
