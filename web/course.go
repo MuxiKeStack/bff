@@ -5,7 +5,6 @@ import (
 	collectv1 "github.com/MuxiKeStack/be-api/gen/proto/collect/v1"
 	coursev1 "github.com/MuxiKeStack/be-api/gen/proto/course/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
-	gradev1 "github.com/MuxiKeStack/be-api/gen/proto/grade/v1"
 	tagv1 "github.com/MuxiKeStack/be-api/gen/proto/tag/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
@@ -25,13 +24,12 @@ type CourseHandler struct {
 	user       userv1.UserServiceClient
 	tag        tagv1.TagServiceClient
 	collect    collectv1.CollectServiceClient
-	grade      gradev1.GradeServiceClient
 	l          logger.Logger
 }
 
 func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
 	evaluation evaluationv1.EvaluationServiceClient, user userv1.UserServiceClient, tag tagv1.TagServiceClient,
-	l logger.Logger, collect collectv1.CollectServiceClient, grade gradev1.GradeServiceClient) *CourseHandler {
+	l logger.Logger, collect collectv1.CollectServiceClient) *CourseHandler {
 	return &CourseHandler{
 		Handler:    handler,
 		course:     course,
@@ -39,7 +37,6 @@ func NewCourseHandler(handler ijwt.Handler, course coursev1.CourseServiceClient,
 		user:       user,
 		tag:        tag,
 		collect:    collect,
-		grade:      grade,
 		l:          l,
 	}
 }
