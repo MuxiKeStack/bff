@@ -38,7 +38,9 @@ func InitWebServer() *ginx.Server {
 	commentHandler := web.NewCommentHandler(commentServiceClient)
 	searchServiceClient := ioc.InitSearchClient(client)
 	searchHandler := search.NewSearchHandler(searchServiceClient, tagServiceClient, evaluationServiceClient)
-	gradeHandler := web.NewGradeHandler(gradeServiceClient, handler)
+	saramaClient := ioc.InitKafka()
+	producer := ioc.InitProducer(saramaClient)
+	gradeHandler := web.NewGradeHandler(gradeServiceClient, ccnuServiceClient, producer, handler)
 	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler)
 	return server
 }

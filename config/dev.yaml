@@ -8,6 +8,10 @@ etcd:
   endpoints:
     - "localhost:12379"
 
+kafka:
+  addrs:
+    - "localhost:9094"
+
 grpc:
   client:
     ccnu:
