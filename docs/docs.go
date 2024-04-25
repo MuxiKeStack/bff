@@ -990,6 +990,118 @@ const docTemplate = `{
                 }
             }
         },
+        "/grades/courses/{courseId}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据课程ID获取该课程的成绩详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "成绩"
+                ],
+                "summary": "获取课程成绩分布",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "课程ID",
+                        "name": "courseId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回成绩数组",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.GradeVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误或未签约"
+                    }
+                }
+            }
+        },
+        "/grades/share": {
+            "post": {
+                "description": "用户主动发起一次分享自己的最新成绩",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "成绩"
+                ],
+                "summary": "分享成绩",
+                "responses": {
+                    "200": {
+                        "description": "成功返回结果",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/sign": {
+            "post": {
+                "description": "用户选择是否签约分享成绩",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "成绩"
+                ],
+                "summary": "签约或取消签约",
+                "parameters": [
+                    {
+                        "description": "签约请求信息",
+                        "name": "SignReq",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.SignReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回结果",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
         "/questions/publish": {
             "post": {
                 "consumes": [
@@ -1800,22 +1912,27 @@ const docTemplate = `{
                 }
             }
         },
-        "web.Grade": {
+        "web.GradeVo": {
             "type": "object",
             "properties": {
                 "final": {
+                    "description": "期末成绩",
                     "type": "number"
                 },
                 "regular": {
+                    "description": "平时成绩",
                     "type": "number"
                 },
                 "term": {
+                    "description": "学期",
                     "type": "string"
                 },
                 "total": {
+                    "description": "总成绩",
                     "type": "number"
                 },
                 "year": {
+                    "description": "学年",
                     "type": "string"
                 }
             }
@@ -1905,12 +2022,6 @@ const docTemplate = `{
                         "type": "integer"
                     }
                 },
-                "grades": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Grade"
-                    }
-                },
                 "id": {
                     "type": "integer"
                 },
@@ -1978,6 +2089,14 @@ const docTemplate = `{
                 }
             }
         },
+        "web.SignReq": {
+            "type": "object",
+            "properties": {
+                "wants_to_sign": {
+                    "type": "boolean"
+                }
+            }
+        },
         "web.UserEditReq": {
             "type": "object",
             "properties": {
@@ -1997,6 +2116,9 @@ const docTemplate = `{
                 },
                 "ctime": {
                     "type": "integer"
+                },
+                "grade_sharing_is_signed": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "integer"

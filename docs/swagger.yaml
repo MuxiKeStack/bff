@@ -195,17 +195,22 @@ definitions:
           type: integer
         type: object
     type: object
-  web.Grade:
+  web.GradeVo:
     properties:
       final:
+        description: 期末成绩
         type: number
       regular:
+        description: 平时成绩
         type: number
       term:
+        description: 学期
         type: string
       total:
+        description: 总成绩
         type: number
       year:
+        description: 学年
         type: string
     type: object
   web.InviteUserToAnswerReq:
@@ -265,10 +270,6 @@ definitions:
         additionalProperties:
           type: integer
         type: object
-      grades:
-        items:
-          $ref: '#/definitions/web.Grade'
-        type: array
       id:
         type: integer
       is_collected:
@@ -314,6 +315,11 @@ definitions:
       utime:
         type: integer
     type: object
+  web.SignReq:
+    properties:
+      wants_to_sign:
+        type: boolean
+    type: object
   web.UserEditReq:
     properties:
       avatar:
@@ -327,6 +333,8 @@ definitions:
         type: string
       ctime:
         type: integer
+      grade_sharing_is_signed:
+        type: boolean
       id:
         type: integer
       new:
@@ -944,6 +952,75 @@ paths:
       summary: 发布课评
       tags:
       - 课评
+  /grades/courses/{courseId}:
+    get:
+      consumes:
+      - application/json
+      description: 根据课程ID获取该课程的成绩详情
+      parameters:
+      - description: 课程ID
+        in: path
+        name: courseId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回成绩数组
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.GradeVo'
+                  type: array
+              type: object
+        "400":
+          description: 参数错误或未签约
+      security:
+      - ApiKeyAuth: []
+      summary: 获取课程成绩分布
+      tags:
+      - 成绩
+  /grades/share:
+    post:
+      consumes:
+      - application/json
+      description: 用户主动发起一次分享自己的最新成绩
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回结果
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 分享成绩
+      tags:
+      - 成绩
+  /grades/sign:
+    post:
+      consumes:
+      - application/json
+      description: 用户选择是否签约分享成绩
+      parameters:
+      - description: 签约请求信息
+        in: body
+        name: SignReq
+        required: true
+        schema:
+          $ref: '#/definitions/web.SignReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回结果
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 签约或取消签约
+      tags:
+      - 成绩
   /questions/{questionId}/detail:
     get:
       consumes:
