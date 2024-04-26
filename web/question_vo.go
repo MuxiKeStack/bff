@@ -26,3 +26,20 @@ type QuestionVo struct {
 	Utime        int64  `json:"utime"`
 	Ctime        int64  `json:"ctime"`
 }
+
+type QuestionCountBizReq struct {
+	Biz   string `form:"biz"`
+	BizId int64  `form:"biz_id"`
+}
+
+type QuestionListBizReq struct {
+	Biz           string `form:"biz"`
+	BizId         int64  `form:"biz_id"`
+	CurQuestionId int64  `form:"cur_question_id"` // 第一页用 0 ，之后每次携带上一页的最后一个uid
+	Limit         int64  `form:"limit"`
+}
+
+type QuestionListMineReq struct {
+	CurQuestionId int64 `form:"cur_question_id"` // 第一页用 0 ，之后每次携带上一页的最后一个uid
+	Limit         int64 `form:"limit"`
+}

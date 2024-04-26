@@ -29,6 +29,9 @@ func (h *QuestionHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handl
 	qg.GET("/:questionId/detail", ginx.Wrap(h.Detail))
 	qg.GET("/:questionId/recommendation_invitees", ginx.WrapReq(h.RecommendationInvitees))
 	qg.POST("/:questionId/invitees", authMiddleware, ginx.WrapClaimsAndReq(h.InviteUserToAnswer))
+	qg.GET("/count", ginx.WrapReq(h.CountBiz))
+	qg.GET("/list", ginx.WrapReq(h.ListBiz))
+	qg.GET("/list/mine", authMiddleware, ginx.WrapClaimsAndReq(h.ListMine))
 }
 
 // Publish 发布一个新问题
@@ -41,7 +44,7 @@ func (h *QuestionHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handl
 // @Success 200 {object} ginx.Result{data=int64} "Success"
 // @Router /questions/publish [post]
 func (h *QuestionHandler) Publish(ctx *gin.Context, req QuestionPublishReq, uc ijwt.UserClaims) (ginx.Result, error) {
-	bizId, ok := questionv1.Biz_value[req.Biz]
+	biz, ok := questionv1.Biz_value[req.Biz]
 	if !ok {
 		return ginx.Result{
 			Code: errs.QuestionBizNotFound,
@@ -51,7 +54,7 @@ func (h *QuestionHandler) Publish(ctx *gin.Context, req QuestionPublishReq, uc i
 	res, err := h.question.Publish(ctx, &questionv1.PublishRequest{
 		Question: &questionv1.Question{
 			QuestionerId: uc.Uid,
-			Biz:          questionv1.Biz(bizId),
+			Biz:          questionv1.Biz(biz),
 			BizId:        req.BizId,
 			Content:      req.Content,
 		},
@@ -195,5 +198,122 @@ func (h *QuestionHandler) InviteUserToAnswer(ctx *gin.Context, req InviteUserToA
 	}
 	return ginx.Result{
 		Msg: "Success",
+	}, nil
+}
+
+// @Summary 获取问题数目[指定资源]
+// @Description 获取指定业务相关的问题数量。
+// @Tags 问题
+// @Accept json
+// @Produce json
+// @Param biz query string true "业务类型"
+// @Param biz_id query int64 true "业务ID"
+// @Success 200 {object} ginx.Result{data=int64} "成功返回问题数量"
+// @Router /questions/count [get]
+func (h *QuestionHandler) CountBiz(ctx *gin.Context, req QuestionCountBizReq) (ginx.Result, error) {
+	biz, ok := questionv1.Biz_value[req.Biz]
+	if !ok {
+		return ginx.Result{
+			Code: errs.QuestionBizNotFound,
+			Msg:  "未找到业务",
+		}, fmt.Errorf("未找到业务: %s", req.Biz)
+	}
+	res, err := h.question.CountBizQuestions(ctx, &questionv1.CountQuestionsRequest{
+		Biz:   questionv1.Biz(biz),
+		BizId: req.BizId,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: res.GetCount(),
+	}, nil
+}
+
+// @Summary 问题列表[指定资源]
+// @Description 根据业务和业务ID获取问题列表。
+// @Tags 问题
+// @Accept json
+// @Produce json
+// @Param biz query string true "业务类型"
+// @Param biz_id query int64 true "业务ID"
+// @Param cur_question_id query int64 true "当前问题ID，用于分页"
+// @Param limit query int64 true "返回问题的数量限制"
+// @Success 200 {object} ginx.Result{data=[]QuestionVo} "成功返回问题列表"
+// @Router /questions/list [get]
+func (h *QuestionHandler) ListBiz(ctx *gin.Context, req QuestionListBizReq) (ginx.Result, error) {
+	biz, ok := questionv1.Biz_value[req.Biz]
+	if !ok {
+		return ginx.Result{
+			Code: errs.QuestionBizNotFound,
+			Msg:  "未找到业务",
+		}, fmt.Errorf("未找到业务: %s", req.Biz)
+	}
+	res, err := h.question.ListBizQuestions(ctx, &questionv1.ListBizQuestionsRequest{
+		Biz:           questionv1.Biz(biz),
+		BizId:         req.BizId,
+		CurQuestionId: req.CurQuestionId,
+		Limit:         req.Limit,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+		Data: slice.Map(res.GetQuestions(), func(idx int, src *questionv1.Question) QuestionVo {
+			return QuestionVo{
+				Id:           src.GetId(),
+				QuestionerId: src.GetQuestionerId(),
+				Biz:          src.GetBiz().String(),
+				BizId:        src.GetBizId(),
+				Content:      src.GetContent(),
+				Utime:        src.GetUtime(),
+				Ctime:        src.GetCtime(),
+			}
+		}),
+	}, nil
+}
+
+// @Summary 问题列表[自己]
+// @Description 获取当前用户自己的问题列表。
+// @Tags 问题
+// @Accept json
+// @Produce json
+// @Param cur_question_id query int64 true "当前问题ID，用于分页"
+// @Param limit query int64 true "返回问题的数量限制"
+// @Success 200 {object} ginx.Result{data=[]QuestionVo} "成功返回问题列表"
+// @Router /questions/list/mine [get]
+func (h *QuestionHandler) ListMine(ctx *gin.Context, req QuestionListMineReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	res, err := h.question.ListUserQuestions(ctx, &questionv1.ListUserQuestionsRequest{
+		Uid:           uc.Uid,
+		CurQuestionId: req.CurQuestionId,
+		Limit:         req.Limit,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+		Data: slice.Map(res.GetQuestions(), func(idx int, src *questionv1.Question) QuestionVo {
+			return QuestionVo{
+				Id:           src.GetId(),
+				QuestionerId: src.GetQuestionerId(),
+				Biz:          src.GetBiz().String(),
+				BizId:        src.GetBizId(),
+				Content:      src.GetContent(),
+				Utime:        src.GetUtime(),
+				Ctime:        src.GetCtime(),
+			}
+		}),
 	}, nil
 }

@@ -1151,6 +1151,113 @@ paths:
       summary: 获取推荐邀请人
       tags:
       - 问题
+  /questions/count:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定业务相关的问题数量。
+      parameters:
+      - description: 业务类型
+        in: query
+        name: biz
+        required: true
+        type: string
+      - description: 业务ID
+        in: query
+        name: biz_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回问题数量
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      summary: 获取问题数目[指定资源]
+      tags:
+      - 问题
+  /questions/list:
+    get:
+      consumes:
+      - application/json
+      description: 根据业务和业务ID获取问题列表。
+      parameters:
+      - description: 业务类型
+        in: query
+        name: biz
+        required: true
+        type: string
+      - description: 业务ID
+        in: query
+        name: biz_id
+        required: true
+        type: integer
+      - description: 当前问题ID，用于分页
+        in: query
+        name: cur_question_id
+        required: true
+        type: integer
+      - description: 返回问题的数量限制
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回问题列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.QuestionVo'
+                  type: array
+              type: object
+      summary: 问题列表[指定资源]
+      tags:
+      - 问题
+  /questions/list/mine:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户自己的问题列表。
+      parameters:
+      - description: 当前问题ID，用于分页
+        in: query
+        name: cur_question_id
+        required: true
+        type: integer
+      - description: 返回问题的数量限制
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回问题列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.QuestionVo'
+                  type: array
+              type: object
+      summary: 问题列表[自己]
+      tags:
+      - 问题
   /questions/publish:
     post:
       consumes:
