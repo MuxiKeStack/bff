@@ -16,11 +16,12 @@ func InitWebServer() *ginx.Server {
 		ioc.InitGinServer,
 		web.NewUserHandler, web.NewCourseHandler, ioc.InitJwtHandler, web.NewQuestionHandler,
 		evaluation.NewEvaluationHandler, web.NewCommentHandler, search.NewSearchHandler,
-		web.NewGradeHandler,
+		web.NewGradeHandler, ioc.InitStaticHandler,
 		// producer
 		ioc.InitProducer,
 		ioc.InitKafka,
 		// rpc client
+		ioc.InitStaticClient,
 		ioc.InitGradeClient,
 		ioc.InitSearchClient,
 		ioc.InitCommentClient,

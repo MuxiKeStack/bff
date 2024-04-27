@@ -41,6 +41,8 @@ func InitWebServer() *ginx.Server {
 	saramaClient := ioc.InitKafka()
 	producer := ioc.InitProducer(saramaClient)
 	gradeHandler := web.NewGradeHandler(gradeServiceClient, ccnuServiceClient, producer, handler)
-	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler)
+	staticServiceClient := ioc.InitStaticClient(client)
+	staticHandler := ioc.InitStaticHandler(staticServiceClient)
+	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler, staticHandler)
 	return server
 }
