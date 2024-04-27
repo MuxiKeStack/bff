@@ -1633,6 +1633,123 @@
                 }
             }
         },
+        "/statics/save": {
+            "post": {
+                "description": "保存静态内容",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "静态"
+                ],
+                "summary": "保存静态内容",
+                "parameters": [
+                    {
+                        "description": "保存静态内容请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.SaveStaticReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/statics/save_file": {
+            "post": {
+                "description": "通过上传文件保存静态内容，目前仅支持.html文件",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "静态"
+                ],
+                "summary": "保存静态内容[文件]",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "静态名称",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "静态内容文件",
+                        "name": "content",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/statics/{name}": {
+            "get": {
+                "description": "根据静态资源名称获取静态资源的内容。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "静态"
+                ],
+                "summary": "获取静态资源",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "静态资源名称",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.StaticVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/users/:userId/profile": {
             "get": {
                 "consumes": [
@@ -2287,6 +2404,17 @@
                 }
             }
         },
+        "web.SaveStaticReq": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "web.SignReq": {
             "type": "object",
             "properties": {
@@ -2314,6 +2442,14 @@
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.StaticVo": {
+            "type": "object",
+            "properties": {
+                "content": {
                     "type": "string"
                 }
             }

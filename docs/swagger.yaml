@@ -315,6 +315,13 @@ definitions:
       utime:
         type: integer
     type: object
+  web.SaveStaticReq:
+    properties:
+      content:
+        type: string
+      name:
+        type: string
+    type: object
   web.SignReq:
     properties:
       wants_to_sign:
@@ -333,6 +340,11 @@ definitions:
       teacher:
         type: string
       type:
+        type: string
+    type: object
+  web.StaticVo:
+    properties:
+      content:
         type: string
     type: object
   web.UserEditReq:
@@ -1371,6 +1383,80 @@ paths:
       summary: 删除搜索历史
       tags:
       - 搜索
+  /statics/{name}:
+    get:
+      consumes:
+      - application/json
+      description: 根据静态资源名称获取静态资源的内容。
+      parameters:
+      - description: 静态资源名称
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.StaticVo'
+              type: object
+      summary: 获取静态资源
+      tags:
+      - 静态
+  /statics/save:
+    post:
+      consumes:
+      - application/json
+      description: 保存静态内容
+      parameters:
+      - description: 保存静态内容请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.SaveStaticReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 保存静态内容
+      tags:
+      - 静态
+  /statics/save_file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 通过上传文件保存静态内容，目前仅支持.html文件
+      parameters:
+      - description: 静态名称
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: 静态内容文件
+        in: formData
+        name: content
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 保存静态内容[文件]
+      tags:
+      - 静态
   /users/:userId/profile:
     get:
       consumes:
