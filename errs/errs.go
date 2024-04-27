@@ -39,3 +39,8 @@ const (
 	GradeRepeatSigning = 407001
 	GradeNotSigned     = 407002
 )
+
+const (
+	StaticInvalidInput     = 408001
+	StaticPermissionDenied = 408002
+)
