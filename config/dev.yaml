@@ -12,6 +12,9 @@ kafka:
   addrs:
     - "localhost:9094"
 
+administrators:
+  - "2022214214"
+
 grpc:
   client:
     ccnu:
@@ -37,7 +40,8 @@ grpc:
       endpoint: "discovery:///search"
     grade:
       endpoint: "discovery:///grade"
-
+    static:
+      endpoint: "discovery:///static"
 
 jwt:
   jwtKey: "mc8QAegcrdOmGwQthrx3cgd2hd8CVfaH"
