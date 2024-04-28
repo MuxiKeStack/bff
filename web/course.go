@@ -150,12 +150,13 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 	}
 	// 去查
 	var (
-		eg        errgroup.Group
-		detailRes *coursev1.GetDetailByIdResponse
-		scoreRes  *evaluationv1.CompositeScoreCourseResponse
-		checkRes  *collectv1.CheckCollectionResponse
-		caRes     *tagv1.CountAssessmentTagsByCourseTaggerResponse
-		cfRes     *tagv1.CountFeatureTagsByCourseTaggerResponse
+		eg            errgroup.Group
+		detailRes     *coursev1.GetDetailByIdResponse
+		scoreRes      *evaluationv1.CompositeScoreCourseResponse
+		checkRes      *collectv1.CheckCollectionResponse
+		caRes         *tagv1.CountAssessmentTagsByCourseTaggerResponse
+		cfRes         *tagv1.CountFeatureTagsByCourseTaggerResponse
+		subscribedRes *coursev1.SubscribedResponse
 	)
 	eg.Go(func() error {
 		var er error
@@ -205,6 +206,15 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 		})
 		return er
 	})
+	// 聚合是否是自己的课
+	eg.Go(func() error {
+		var er error
+		subscribedRes, er = h.course.Subscribed(ctx, &coursev1.SubscribedRequest{
+			Uid:      uc.Uid,
+			CourseId: cid,
+		})
+		return er
+	})
 	err = eg.Wait()
 	if err != nil {
 		return ginx.Result{
@@ -229,7 +239,8 @@ func (h *CourseHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 			Features: slice.ToMapV(cfRes.GetItems(), func(element *tagv1.CountFeatureItem) (string, int64) {
 				return element.GetTag().String(), element.GetCount()
 			}),
-			IsCollected: checkRes.GetIsCollected(),
+			IsCollected:  checkRes.GetIsCollected(),
+			IsSubscribed: subscribedRes.GetSubscribed(),
 		},
 	}, nil
 }

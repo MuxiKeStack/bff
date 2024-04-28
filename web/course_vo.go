@@ -34,7 +34,8 @@ type PublicCourseVo struct {
 	Credit         float64          `json:"credit"`
 	Assessments    map[string]int64 `json:"assessments"` // 标签:数量
 	Features       map[string]int64 `json:"features"`
-	IsCollected    bool             `json:"is_collected"`
+	IsCollected    bool             `json:"is_collected"`  // 是否收藏了
+	IsSubscribed   bool             `json:"is_subscribed"` // 是否上过这门课
 }
 
 type InviteUserToAnswerReq struct {
