@@ -288,7 +288,7 @@ func (h *QuestionHandler) ListBiz(ctx *gin.Context, req QuestionListBizReq) (gin
 			Ctime:        src.GetCtime(),
 		}
 	})
-	var eg *errgroup.Group
+	var eg errgroup.Group
 	for i := range questionVos {
 		eg.Go(func() error {
 			// 聚合 cnt 和 第一条
@@ -357,7 +357,7 @@ func (h *QuestionHandler) ListMine(ctx *gin.Context, req QuestionListMineReq, uc
 			Ctime:        src.GetCtime(),
 		}
 	})
-	var eg *errgroup.Group
+	var eg errgroup.Group
 	for i := range questionVos {
 		eg.Go(func() error {
 			// 聚合 cnt 和 第一条
