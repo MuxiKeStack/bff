@@ -1,4 +1,15 @@
 definitions:
+  answerv1.Answer:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      publisher_id:
+        type: integer
+      question_id:
+        type: integer
+    type: object
   evaluation.EndorseReq:
     properties:
       stance:
@@ -27,6 +38,7 @@ definitions:
       publisher_id:
         type: integer
       stance:
+        description: 1支持，0无，-1反对
         type: integer
       star_rating:
         type: integer
@@ -120,6 +132,32 @@ definitions:
         type: integer
       keyword:
         type: string
+    type: object
+  web.AnswerPublishReq:
+    properties:
+      content:
+        type: string
+      question_id:
+        type: integer
+    type: object
+  web.AnswerVo:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      publisher_id:
+        type: integer
+      question_id:
+        type: integer
+      stance:
+        type: integer
+      total_comment_count:
+        type: integer
+      total_oppose_count:
+        type: integer
+      total_support_count:
+        type: integer
     type: object
   web.CollectedCourseVo:
     properties:
@@ -273,6 +311,10 @@ definitions:
       id:
         type: integer
       is_collected:
+        description: 是否收藏了
+        type: boolean
+      is_subscribed:
+        description: 是否上过这门课
         type: boolean
       name:
         type: string
@@ -298,6 +340,8 @@ definitions:
     type: object
   web.QuestionVo:
     properties:
+      answer_cnt:
+        type: integer
       biz:
         description: 具体针对那种业务的提问，如 Course
         type: string
@@ -309,6 +353,10 @@ definitions:
         type: integer
       id:
         type: integer
+      preview_answers:
+        items:
+          $ref: '#/definitions/answerv1.Answer'
+        type: array
       questioner_id:
         description: 提问者用户id
         type: integer
@@ -386,6 +434,150 @@ definitions:
 info:
   contact: {}
 paths:
+  /answers/{answerId}/detail:
+    get:
+      consumes:
+      - application/json
+      description: 通过答案ID检索特定回答的详情
+      parameters:
+      - description: 答案ID
+        in: path
+        name: answerId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回答案详情
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.AnswerVo'
+              type: object
+      summary: 获取回答详情
+      tags:
+      - 回答
+  /answers/{answerId}/endorse:
+    post:
+      consumes:
+      - application/json
+      description: 为指定回答表达支持或反对
+      parameters:
+      - description: 答案ID
+        in: path
+        name: answerId
+        required: true
+        type: integer
+      - description: 立场（支持或反对）
+        in: body
+        name: stance
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 为回答背书
+      tags:
+      - 回答
+  /answers/list/mine:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户发布的所有回答的列表
+      parameters:
+      - description: 当前答案ID
+        in: query
+        name: cur_answer_id
+        type: integer
+      - default: 10
+        description: 返回答案数量限制
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回答案列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.AnswerVo'
+                  type: array
+              type: object
+      summary: 回答列表[问题]
+      tags:
+      - 回答
+  /answers/list/questions/{questionId}:
+    get:
+      consumes:
+      - application/json
+      description: 为特定问题检索所有相关回答的列表
+      parameters:
+      - description: 问题ID
+        in: path
+        name: questionId
+        required: true
+        type: integer
+      - description: 当前答案ID
+        in: query
+        name: cur_answer_id
+        type: integer
+      - default: 10
+        description: 返回答案数量限制
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回答案列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/web.AnswerVo'
+                  type: array
+              type: object
+      summary: 回答列表[问题]
+      tags:
+      - 回答
+  /answers/publish:
+    post:
+      consumes:
+      - application/json
+      description: 用户发布答案到指定问题
+      parameters:
+      - description: 发布答案请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.AnswerPublishReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回
+          schema:
+            $ref: '#/definitions/ginx.Result'
+      summary: 发布新回答
+      tags:
+      - 回答
   /comments/{commentId}:
     delete:
       consumes:

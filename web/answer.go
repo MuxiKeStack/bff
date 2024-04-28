@@ -44,6 +44,15 @@ func (h *AnswerHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handler
 	ag.POST("/:answerId/endorse", authMiddleware, ginx.WrapClaimsAndReq(h.Endorse))
 }
 
+// Publish 发布一个新答案
+// @Summary 发布新回答
+// @Description 用户发布答案到指定问题
+// @Tags 回答
+// @Accept json
+// @Produce json
+// @Param request body AnswerPublishReq true "发布答案请求体"
+// @Success 200 {object} ginx.Result "成功返回"
+// @Router /answers/publish [post]
 func (h *AnswerHandler) Publish(ctx *gin.Context, req AnswerPublishReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	questionRes, err := h.questionClient.GetDetailById(ctx, &questionv1.GetDetailByIdRequest{
 		QuestionId: req.QuestionId,
@@ -89,6 +98,15 @@ func (h *AnswerHandler) Publish(ctx *gin.Context, req AnswerPublishReq, uc ijwt.
 	}, nil
 }
 
+// Detail 获取回答详情
+// @Summary 获取回答详情
+// @Description 通过答案ID检索特定回答的详情
+// @Tags 回答
+// @Accept json
+// @Produce json
+// @Param answerId path int64 true "答案ID"
+// @Success 200 {object} ginx.Result{data=AnswerVo} "成功返回答案详情"
+// @Router /answers/{answerId}/detail [get]
 func (h *AnswerHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
 	aidStr := ctx.Param("answerId")
 	aid, err := strconv.ParseInt(aidStr, 10, 64)
@@ -143,6 +161,17 @@ func (h *AnswerHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 	}, nil
 }
 
+// ListForQuestion 回答列表[问题]
+// @Summary 回答列表[问题]
+// @Description 为特定问题检索所有相关回答的列表
+// @Tags 回答
+// @Accept json
+// @Produce json
+// @Param questionId path int64 true "问题ID"
+// @Param cur_answer_id query int64 false "当前答案ID"
+// @Param limit query int64 false "返回答案数量限制" default(10)
+// @Success 200 {object} ginx.Result{data=[]AnswerVo} "成功返回答案列表"
+// @Router /answers/list/questions/{questionId} [get]
 func (h *AnswerHandler) ListForQuestion(ctx *gin.Context, req AnswerListReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	qidStr := ctx.Param("questionId")
 	qid, err := strconv.ParseInt(qidStr, 10, 64)
@@ -206,6 +235,16 @@ func (h *AnswerHandler) ListForQuestion(ctx *gin.Context, req AnswerListReq, uc 
 	}, nil
 }
 
+// ListForMine 回答列表[自己]
+// @Summary 回答列表[自己]
+// @Description 获取当前用户发布的所有回答的列表
+// @Tags 回答
+// @Accept json
+// @Produce json
+// @Param cur_answer_id query int64 false "当前答案ID"
+// @Param limit query int64 false "返回答案数量限制" default(10)
+// @Success 200 {object} ginx.Result{data=[]AnswerVo} "成功返回答案列表"
+// @Router /answers/list/mine [get]
 func (h *AnswerHandler) ListForMine(ctx *gin.Context, req AnswerListReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	if req.Limit > 100 {
 		req.Limit = 100
@@ -261,6 +300,16 @@ func (h *AnswerHandler) ListForMine(ctx *gin.Context, req AnswerListReq, uc ijwt
 	}, nil
 }
 
+// Endorse 为回答背书
+// @Summary 为回答背书
+// @Description 为指定回答表达支持或反对
+// @Tags 回答
+// @Accept json
+// @Produce json
+// @Param answerId path int64 true "答案ID"
+// @Param stance body int true "立场（支持或反对）"
+// @Success 200 {object} ginx.Result "成功返回"
+// @Router /answers/{answerId}/endorse [post]
 func (h *AnswerHandler) Endorse(ctx *gin.Context, req EndorseReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	aidStr := ctx.Param("answerId")
 	aid, err := strconv.ParseInt(aidStr, 10, 64)

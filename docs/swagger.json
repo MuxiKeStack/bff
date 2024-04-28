@@ -4,6 +4,238 @@
         "contact": {}
     },
     "paths": {
+        "/answers/list/mine": {
+            "get": {
+                "description": "获取当前用户发布的所有回答的列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "回答"
+                ],
+                "summary": "回答列表[问题]",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "当前答案ID",
+                        "name": "cur_answer_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "返回答案数量限制",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回答案列表",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.AnswerVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/answers/list/questions/{questionId}": {
+            "get": {
+                "description": "为特定问题检索所有相关回答的列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "回答"
+                ],
+                "summary": "回答列表[问题]",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "问题ID",
+                        "name": "questionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "当前答案ID",
+                        "name": "cur_answer_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "返回答案数量限制",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回答案列表",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/web.AnswerVo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/answers/publish": {
+            "post": {
+                "description": "用户发布答案到指定问题",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "回答"
+                ],
+                "summary": "发布新回答",
+                "parameters": [
+                    {
+                        "description": "发布答案请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.AnswerPublishReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
+        "/answers/{answerId}/detail": {
+            "get": {
+                "description": "通过答案ID检索特定回答的详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "回答"
+                ],
+                "summary": "获取回答详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "答案ID",
+                        "name": "answerId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回答案详情",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.AnswerVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/answers/{answerId}/endorse": {
+            "post": {
+                "description": "为指定回答表达支持或反对",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "回答"
+                ],
+                "summary": "为回答背书",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "答案ID",
+                        "name": "answerId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "立场（支持或反对）",
+                        "name": "stance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回",
+                        "schema": {
+                            "$ref": "#/definitions/ginx.Result"
+                        }
+                    }
+                }
+            }
+        },
         "/comments/count": {
             "get": {
                 "description": "根据业务类型和业务ID计数评论。",
@@ -1933,6 +2165,23 @@
         }
     },
     "definitions": {
+        "answerv1.Answer": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "publisher_id": {
+                    "type": "integer"
+                },
+                "question_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "evaluation.EndorseReq": {
             "type": "object",
             "properties": {
@@ -1974,6 +2223,7 @@
                     "type": "integer"
                 },
                 "stance": {
+                    "description": "1支持，0无，-1反对",
                     "type": "integer"
                 },
                 "star_rating": {
@@ -2111,6 +2361,46 @@
                 },
                 "keyword": {
                     "type": "string"
+                }
+            }
+        },
+        "web.AnswerPublishReq": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "question_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "web.AnswerVo": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "publisher_id": {
+                    "type": "integer"
+                },
+                "question_id": {
+                    "type": "integer"
+                },
+                "stance": {
+                    "type": "integer"
+                },
+                "total_comment_count": {
+                    "type": "integer"
+                },
+                "total_oppose_count": {
+                    "type": "integer"
+                },
+                "total_support_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -2341,6 +2631,11 @@
                     "type": "integer"
                 },
                 "is_collected": {
+                    "description": "是否收藏了",
+                    "type": "boolean"
+                },
+                "is_subscribed": {
+                    "description": "是否上过这门课",
                     "type": "boolean"
                 },
                 "name": {
@@ -2379,6 +2674,9 @@
         "web.QuestionVo": {
             "type": "object",
             "properties": {
+                "answer_cnt": {
+                    "type": "integer"
+                },
                 "biz": {
                     "description": "具体针对那种业务的提问，如 Course",
                     "type": "string"
@@ -2394,6 +2692,12 @@
                 },
                 "id": {
                     "type": "integer"
+                },
+                "preview_answers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/answerv1.Answer"
+                    }
                 },
                 "questioner_id": {
                     "description": "提问者用户id",
