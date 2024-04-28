@@ -19,7 +19,8 @@ import (
 
 func InitGinServer(l logger.Logger, jwtHdl ijwt.Handler, user *web.UserHandler,
 	course *web.CourseHandler, question *web.QuestionHandler, evaluation *evaluation.EvaluationHandler,
-	comment *web.CommentHandler, search *search.SearchHandler, grade *web.GradeHandler, static *web.StaticHandler) *ginx.Server {
+	comment *web.CommentHandler, search *search.SearchHandler, grade *web.GradeHandler, static *web.StaticHandler,
+	answer *web.AnswerHandler) *ginx.Server {
 	engine := gin.Default()
 	engine.Use(
 		corsHdl(),
@@ -34,6 +35,7 @@ func InitGinServer(l logger.Logger, jwtHdl ijwt.Handler, user *web.UserHandler,
 	search.RegisterRoutes(engine, authMiddleware)
 	grade.RegisterRoutes(engine, authMiddleware)
 	static.RegisterRoutes(engine, authMiddleware)
+	answer.RegisterRoutes(engine, authMiddleware)
 	addr := viper.GetString("http.addr")
 	ginx.InitCounter(prometheus.CounterOpts{
 		Namespace: "muxi",

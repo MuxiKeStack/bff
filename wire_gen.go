@@ -31,7 +31,8 @@ func InitWebServer() *ginx.Server {
 	collectServiceClient := ioc.InitCollectClient(client)
 	courseHandler := web.NewCourseHandler(handler, courseServiceClient, evaluationServiceClient, userServiceClient, tagServiceClient, logger, collectServiceClient)
 	questionServiceClient := ioc.InitQuestionClient(client)
-	questionHandler := web.NewQuestionHandler(questionServiceClient, userServiceClient, logger)
+	answerServiceClient := ioc.InitAnswerClient(client)
+	questionHandler := web.NewQuestionHandler(questionServiceClient, userServiceClient, answerServiceClient, logger)
 	stanceServiceClient := ioc.InitStanceClient(client)
 	commentServiceClient := ioc.InitCommentClient(client)
 	evaluationHandler := evaluation.NewEvaluationHandler(evaluationServiceClient, tagServiceClient, stanceServiceClient, commentServiceClient)
@@ -43,6 +44,7 @@ func InitWebServer() *ginx.Server {
 	gradeHandler := web.NewGradeHandler(gradeServiceClient, ccnuServiceClient, producer, handler)
 	staticServiceClient := ioc.InitStaticClient(client)
 	staticHandler := ioc.InitStaticHandler(staticServiceClient)
-	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler, staticHandler)
+	answerHandler := web.NewAnswerHandler(answerServiceClient, courseServiceClient, questionServiceClient, commentServiceClient, stanceServiceClient)
+	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler, staticHandler, answerHandler)
 	return server
 }

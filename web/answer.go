@@ -23,6 +23,18 @@ type AnswerHandler struct {
 	stanceClient   stancev1.StanceServiceClient
 }
 
+func NewAnswerHandler(answerClient answerv1.AnswerServiceClient, courseClient coursev1.CourseServiceClient,
+	questionClient questionv1.QuestionServiceClient, commentClient commentv1.CommentServiceClient,
+	stanceClient stancev1.StanceServiceClient) *AnswerHandler {
+	return &AnswerHandler{
+		answerClient:   answerClient,
+		courseClient:   courseClient,
+		questionClient: questionClient,
+		commentClient:  commentClient,
+		stanceClient:   stanceClient,
+	}
+}
+
 func (h *AnswerHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	ag := s.Group("/answers")
 	ag.POST("/publish", authMiddleware, ginx.WrapClaimsAndReq(h.Publish))
