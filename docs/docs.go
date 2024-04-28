@@ -27,7 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "回答"
                 ],
-                "summary": "回答列表[问题]",
+                "summary": "回答列表[自己]",
                 "parameters": [
                     {
                         "type": "integer",
@@ -156,7 +156,19 @@ const docTemplate = `{
                     "200": {
                         "description": "成功返回",
                         "schema": {
-                            "$ref": "#/definitions/ginx.Result"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -233,7 +245,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "$ref": "#/definitions/web.EndorseReq"
                         }
                     }
                 ],
@@ -2182,6 +2194,9 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "ctime": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -2189,6 +2204,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "question_id": {
+                    "type": "integer"
+                },
+                "utime": {
                     "type": "integer"
                 }
             }
@@ -2392,6 +2410,9 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "ctime": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -2411,6 +2432,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "total_support_count": {
+                    "type": "integer"
+                },
+                "utime": {
                     "type": "integer"
                 }
             }
@@ -2525,6 +2549,14 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "web.EndorseReq": {
+            "type": "object",
+            "properties": {
+                "stance": {
+                    "type": "integer"
                 }
             }
         },

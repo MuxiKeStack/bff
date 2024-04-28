@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	answerv1 "github.com/MuxiKeStack/be-api/gen/proto/answer/v1"
 	commentv1 "github.com/MuxiKeStack/be-api/gen/proto/comment/v1"
 	coursev1 "github.com/MuxiKeStack/be-api/gen/proto/course/v1"
@@ -38,6 +39,7 @@ func NewAnswerHandler(answerClient answerv1.AnswerServiceClient, courseClient co
 func (h *AnswerHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	ag := s.Group("/answers")
 	ag.POST("/publish", authMiddleware, ginx.WrapClaimsAndReq(h.Publish))
+	ag.DELETE("/:answerId", authMiddleware, ginx.WrapClaims(h.DelAnswer))
 	ag.GET("/:answerId/detail", authMiddleware, ginx.WrapClaims(h.Detail))
 	ag.GET("/list/questions/:questionId", authMiddleware, ginx.WrapClaimsAndReq(h.ListForQuestion))
 	ag.GET("/list/mine", authMiddleware, ginx.WrapClaimsAndReq(h.ListForMine))
@@ -51,9 +53,15 @@ func (h *AnswerHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handler
 // @Accept json
 // @Produce json
 // @Param request body AnswerPublishReq true "发布答案请求体"
-// @Success 200 {object} ginx.Result "成功返回"
+// @Success 200 {object} ginx.Result{data=int64} "成功返回"
 // @Router /answers/publish [post]
 func (h *AnswerHandler) Publish(ctx *gin.Context, req AnswerPublishReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	if len([]rune(req.Content)) > 200 {
+		return ginx.Result{
+			Code: errs.AnswerInvalidInput,
+			Msg:  "回答不能超过200个字符",
+		}, errors.New("回答超过了200个字符")
+	}
 	questionRes, err := h.questionClient.GetDetailById(ctx, &questionv1.GetDetailByIdRequest{
 		QuestionId: req.QuestionId,
 	})
@@ -82,10 +90,12 @@ func (h *AnswerHandler) Publish(ctx *gin.Context, req AnswerPublishReq, uc ijwt.
 			}, er
 		}
 	}
-	_, err = h.answerClient.Publish(ctx, &answerv1.PublishRequest{
-		PublisherId: uc.Uid,
-		QuestionId:  req.QuestionId,
-		Content:     req.Content,
+	publishRes, err := h.answerClient.Publish(ctx, &answerv1.PublishRequest{
+		Answer: &answerv1.Answer{
+			PublisherId: uc.Uid,
+			QuestionId:  req.QuestionId,
+			Content:     req.Content,
+		},
 	})
 	if err != nil {
 		return ginx.Result{
@@ -94,7 +104,8 @@ func (h *AnswerHandler) Publish(ctx *gin.Context, req AnswerPublishReq, uc ijwt.
 		}, err
 	}
 	return ginx.Result{
-		Msg: "Success",
+		Msg:  "Success",
+		Data: publishRes.GetAnswerId(),
 	}, nil
 }
 
@@ -157,6 +168,8 @@ func (h *AnswerHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 			TotalSupportCount: stanceRes.GetTotalSupports(),
 			TotalOpposeCount:  stanceRes.GetTotalOpposes(),
 			TotalCommentCount: commentRes.GetCount(),
+			Utime:             answerRes.GetAnswer().GetUtime(),
+			Ctime:             answerRes.GetAnswer().GetCtime(),
 		},
 	}, nil
 }
@@ -195,6 +208,8 @@ func (h *AnswerHandler) ListForQuestion(ctx *gin.Context, req AnswerListReq, uc 
 			PublisherId: src.GetPublisherId(),
 			QuestionId:  src.GetQuestionId(),
 			Content:     src.GetContent(),
+			Utime:       src.GetUtime(),
+			Ctime:       src.GetCtime(),
 		}
 	})
 	var eg errgroup.Group
@@ -260,6 +275,8 @@ func (h *AnswerHandler) ListForMine(ctx *gin.Context, req AnswerListReq, uc ijwt
 			PublisherId: src.GetPublisherId(),
 			QuestionId:  src.GetQuestionId(),
 			Content:     src.GetContent(),
+			Utime:       src.GetUtime(),
+			Ctime:       src.GetCtime(),
 		}
 	})
 	var eg errgroup.Group
@@ -307,7 +324,7 @@ func (h *AnswerHandler) ListForMine(ctx *gin.Context, req AnswerListReq, uc ijwt
 // @Accept json
 // @Produce json
 // @Param answerId path int64 true "答案ID"
-// @Param stance body int true "立场（支持或反对）"
+// @Param stance body EndorseReq true "立场（支持或反对）"
 // @Success 200 {object} ginx.Result "成功返回"
 // @Router /answers/{answerId}/endorse [post]
 func (h *AnswerHandler) Endorse(ctx *gin.Context, req EndorseReq, uc ijwt.UserClaims) (ginx.Result, error) {
@@ -315,14 +332,14 @@ func (h *AnswerHandler) Endorse(ctx *gin.Context, req EndorseReq, uc ijwt.UserCl
 	aid, err := strconv.ParseInt(aidStr, 10, 64)
 	if err != nil {
 		return ginx.Result{
-			Code: errs.EvaluationInvalidInput,
+			Code: errs.AnswerInvalidInput,
 			Msg:  "输入参数有误",
 		}, err
 	}
 	_, ok := stancev1.Stance_name[req.Stance]
 	if !ok {
 		return ginx.Result{
-			Code: errs.EvaluationInvalidInput,
+			Code: errs.AnswerInvalidInput,
 			Msg:  "不合法的立场",
 		}, err
 	}
@@ -331,6 +348,30 @@ func (h *AnswerHandler) Endorse(ctx *gin.Context, req EndorseReq, uc ijwt.UserCl
 		Biz:    stancev1.Biz_Answer,
 		BizId:  aid,
 		Stance: stancev1.Stance(req.Stance),
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg: "Success",
+	}, nil
+}
+
+func (h *AnswerHandler) DelAnswer(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
+	aidStr := ctx.Param("answerId")
+	aid, err := strconv.ParseInt(aidStr, 10, 64)
+	if err != nil {
+		return ginx.Result{
+			Code: errs.AnswerInvalidInput,
+			Msg:  "输入参数有误",
+		}, err
+	}
+	_, err = h.answerClient.DelAnswerById(ctx, &answerv1.DelAnswerByIdRequest{
+		AnswerId: aid,
+		Uid:      uc.Uid,
 	})
 	if err != nil {
 		return ginx.Result{

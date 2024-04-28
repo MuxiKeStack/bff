@@ -3,11 +3,15 @@ definitions:
     properties:
       content:
         type: string
+      ctime:
+        type: integer
       id:
         type: integer
       publisher_id:
         type: integer
       question_id:
+        type: integer
+      utime:
         type: integer
     type: object
   evaluation.EndorseReq:
@@ -144,6 +148,8 @@ definitions:
     properties:
       content:
         type: string
+      ctime:
+        type: integer
       id:
         type: integer
       publisher_id:
@@ -157,6 +163,8 @@ definitions:
       total_oppose_count:
         type: integer
       total_support_count:
+        type: integer
+      utime:
         type: integer
     type: object
   web.CollectedCourseVo:
@@ -232,6 +240,11 @@ definitions:
         additionalProperties:
           type: integer
         type: object
+    type: object
+  web.EndorseReq:
+    properties:
+      stance:
+        type: integer
     type: object
   web.GradeVo:
     properties:
@@ -476,7 +489,7 @@ paths:
         name: stance
         required: true
         schema:
-          type: integer
+          $ref: '#/definitions/web.EndorseReq'
       produces:
       - application/json
       responses:
@@ -516,7 +529,7 @@ paths:
                     $ref: '#/definitions/web.AnswerVo'
                   type: array
               type: object
-      summary: 回答列表[问题]
+      summary: 回答列表[自己]
       tags:
       - 回答
   /answers/list/questions/{questionId}:
@@ -574,7 +587,12 @@ paths:
         "200":
           description: 成功返回
           schema:
-            $ref: '#/definitions/ginx.Result'
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  type: integer
+              type: object
       summary: 发布新回答
       tags:
       - 回答
