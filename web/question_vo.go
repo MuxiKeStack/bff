@@ -1,5 +1,7 @@
 package web
 
+import answerv1 "github.com/MuxiKeStack/be-api/gen/proto/answer/v1"
+
 type QuestionPublishReq struct {
 	Content string `json:"content"`
 	Biz     string `json:"biz"`    // 平台资源类型，如Course
@@ -18,13 +20,15 @@ type InviteesVo struct {
 }
 
 type QuestionVo struct {
-	Id           int64  `json:"id"`
-	QuestionerId int64  `json:"questioner_id"` // 提问者用户id
-	Biz          string `json:"biz"`           // 具体针对那种业务的提问，如 Course
-	BizId        int64  `json:"biz_id"`        //
-	Content      string `json:"content"`
-	Utime        int64  `json:"utime"`
-	Ctime        int64  `json:"ctime"`
+	Id             int64              `json:"id"`
+	QuestionerId   int64              `json:"questioner_id"` // 提问者用户id
+	Biz            string             `json:"biz"`           // 具体针对那种业务的提问，如 Course
+	BizId          int64              `json:"biz_id"`        //
+	Content        string             `json:"content"`
+	AnswerCnt      int64              `json:"answer_cnt"`
+	PreviewAnswers []*answerv1.Answer `json:"preview_answers"`
+	Utime          int64              `json:"utime"`
+	Ctime          int64              `json:"ctime"`
 }
 
 type QuestionCountBizReq struct {

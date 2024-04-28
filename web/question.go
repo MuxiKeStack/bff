@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	answerv1 "github.com/MuxiKeStack/be-api/gen/proto/answer/v1"
 	questionv1 "github.com/MuxiKeStack/be-api/gen/proto/question/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
@@ -10,17 +11,25 @@ import (
 	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 	"strconv"
 )
 
 type QuestionHandler struct {
 	question questionv1.QuestionServiceClient
 	user     userv1.UserServiceClient
+	answer   answerv1.AnswerServiceClient
 	l        logger.Logger
 }
 
-func NewQuestionHandler(question questionv1.QuestionServiceClient, user userv1.UserServiceClient, l logger.Logger) *QuestionHandler {
-	return &QuestionHandler{question: question, user: user, l: l}
+func NewQuestionHandler(question questionv1.QuestionServiceClient, user userv1.UserServiceClient,
+	answer answerv1.AnswerServiceClient, l logger.Logger) *QuestionHandler {
+	return &QuestionHandler{
+		question: question,
+		user:     user,
+		answer:   answer,
+		l:        l,
+	}
 }
 
 func (h *QuestionHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
@@ -253,6 +262,9 @@ func (h *QuestionHandler) ListBiz(ctx *gin.Context, req QuestionListBizReq) (gin
 			Msg:  "未找到业务",
 		}, fmt.Errorf("未找到业务: %s", req.Biz)
 	}
+	if req.Limit > 100 {
+		req.Limit = 100
+	}
 	res, err := h.question.ListBizQuestions(ctx, &questionv1.ListBizQuestionsRequest{
 		Biz:           questionv1.Biz(biz),
 		BizId:         req.BizId,
@@ -265,19 +277,48 @@ func (h *QuestionHandler) ListBiz(ctx *gin.Context, req QuestionListBizReq) (gin
 			Msg:  "系统异常",
 		}, err
 	}
-	return ginx.Result{
-		Msg: "Success",
-		Data: slice.Map(res.GetQuestions(), func(idx int, src *questionv1.Question) QuestionVo {
-			return QuestionVo{
-				Id:           src.GetId(),
-				QuestionerId: src.GetQuestionerId(),
-				Biz:          src.GetBiz().String(),
-				BizId:        src.GetBizId(),
-				Content:      src.GetContent(),
-				Utime:        src.GetUtime(),
-				Ctime:        src.GetCtime(),
+	questionVos := slice.Map(res.GetQuestions(), func(idx int, src *questionv1.Question) QuestionVo {
+		return QuestionVo{
+			Id:           src.GetId(),
+			QuestionerId: src.GetQuestionerId(),
+			Biz:          src.GetBiz().String(),
+			BizId:        src.GetBizId(),
+			Content:      src.GetContent(),
+			Utime:        src.GetUtime(),
+			Ctime:        src.GetCtime(),
+		}
+	})
+	var eg *errgroup.Group
+	for i := range questionVos {
+		eg.Go(func() error {
+			// 聚合 cnt 和 第一条
+			cntRes, er := h.answer.CountForQuestion(ctx, &answerv1.CountForQuestionRequest{QuestionId: questionVos[i].QuestionerId})
+			if er != nil {
+				return er
 			}
-		}),
+			questionVos[i].AnswerCnt = cntRes.GetCnt()
+			listRes, er := h.answer.ListForQuestion(ctx, &answerv1.ListForQuestionRequest{
+				QuestionId:  questionVos[i].QuestionerId,
+				CurAnswerId: 0,
+				Limit:       1,
+			})
+			if er != nil {
+				return er
+			}
+			questionVos[i].PreviewAnswers = listRes.GetAnswers()
+			return nil
+		})
+	}
+	err = eg.Wait()
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: questionVos,
 	}, nil
 }
 
@@ -291,6 +332,9 @@ func (h *QuestionHandler) ListBiz(ctx *gin.Context, req QuestionListBizReq) (gin
 // @Success 200 {object} ginx.Result{data=[]QuestionVo} "成功返回问题列表"
 // @Router /questions/list/mine [get]
 func (h *QuestionHandler) ListMine(ctx *gin.Context, req QuestionListMineReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	if req.Limit > 100 {
+		req.Limit = 100
+	}
 	res, err := h.question.ListUserQuestions(ctx, &questionv1.ListUserQuestionsRequest{
 		Uid:           uc.Uid,
 		CurQuestionId: req.CurQuestionId,
@@ -302,18 +346,47 @@ func (h *QuestionHandler) ListMine(ctx *gin.Context, req QuestionListMineReq, uc
 			Msg:  "系统异常",
 		}, err
 	}
-	return ginx.Result{
-		Msg: "Success",
-		Data: slice.Map(res.GetQuestions(), func(idx int, src *questionv1.Question) QuestionVo {
-			return QuestionVo{
-				Id:           src.GetId(),
-				QuestionerId: src.GetQuestionerId(),
-				Biz:          src.GetBiz().String(),
-				BizId:        src.GetBizId(),
-				Content:      src.GetContent(),
-				Utime:        src.GetUtime(),
-				Ctime:        src.GetCtime(),
+	questionVos := slice.Map(res.GetQuestions(), func(idx int, src *questionv1.Question) QuestionVo {
+		return QuestionVo{
+			Id:           src.GetId(),
+			QuestionerId: src.GetQuestionerId(),
+			Biz:          src.GetBiz().String(),
+			BizId:        src.GetBizId(),
+			Content:      src.GetContent(),
+			Utime:        src.GetUtime(),
+			Ctime:        src.GetCtime(),
+		}
+	})
+	var eg *errgroup.Group
+	for i := range questionVos {
+		eg.Go(func() error {
+			// 聚合 cnt 和 第一条
+			cntRes, er := h.answer.CountForQuestion(ctx, &answerv1.CountForQuestionRequest{QuestionId: questionVos[i].QuestionerId})
+			if er != nil {
+				return er
 			}
-		}),
+			questionVos[i].AnswerCnt = cntRes.GetCnt()
+			listRes, er := h.answer.ListForQuestion(ctx, &answerv1.ListForQuestionRequest{
+				QuestionId:  questionVos[i].QuestionerId,
+				CurAnswerId: 0,
+				Limit:       1,
+			})
+			if er != nil {
+				return er
+			}
+			questionVos[i].PreviewAnswers = listRes.GetAnswers()
+			return nil
+		})
+	}
+	err = eg.Wait()
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: questionVos,
 	}, nil
 }
