@@ -1,5 +1,7 @@
 package evaluation
 
+import "github.com/MuxiKeStack/bff/web"
+
 type SaveReq struct {
 	Id          int64    `json:"id"`
 	CourseId    int64    `json:"course_id"`
@@ -29,7 +31,7 @@ type EvaluationVo struct {
 	Status            string   `json:"status"`
 	Assessments       []string `json:"assessments"` // 考核方式，支持多选
 	Features          []string `json:"features"`    // 课程特点，支持多选
-	Stance            int32    `json:"stance"`
+	Stance            int32    `json:"stance"`      // 1支持，0无，-1反对
 	TotalSupportCount int64    `json:"total_support_count"`
 	TotalOpposeCount  int64    `json:"total_oppose_count"`
 	TotalCommentCount int64    `json:"total_comment_count"`
@@ -52,6 +54,4 @@ type CountMineReq struct {
 	Status string `form:"status"`
 }
 
-type EndorseReq struct {
-	Stance int32 `json:"stance"`
-}
+type EndorseReq = web.EndorseReq

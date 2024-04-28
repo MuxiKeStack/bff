@@ -44,3 +44,8 @@ const (
 	StaticInvalidInput     = 408001
 	StaticPermissionDenied = 408002
 )
+
+const (
+	AnswerInvalidInput = 409001
+	AnswerPermissionDenied
+)
