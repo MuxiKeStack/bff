@@ -298,7 +298,7 @@ func (h *QuestionHandler) ListBiz(ctx *gin.Context, req QuestionListBizReq) (gin
 			}
 			questionVos[i].AnswerCnt = cntRes.GetCnt()
 			listRes, er := h.answer.ListForQuestion(ctx, &answerv1.ListForQuestionRequest{
-				QuestionId:  questionVos[i].QuestionerId,
+				QuestionId:  questionVos[i].Id,
 				CurAnswerId: 0,
 				Limit:       1,
 			})
@@ -367,7 +367,7 @@ func (h *QuestionHandler) ListMine(ctx *gin.Context, req QuestionListMineReq, uc
 			}
 			questionVos[i].AnswerCnt = cntRes.GetCnt()
 			listRes, er := h.answer.ListForQuestion(ctx, &answerv1.ListForQuestionRequest{
-				QuestionId:  questionVos[i].QuestionerId,
+				QuestionId:  questionVos[i].Id,
 				CurAnswerId: 0,
 				Limit:       1,
 			})
