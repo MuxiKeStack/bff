@@ -58,6 +58,20 @@ func (h *EvaluationHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Han
 // @Router /evaluations/save [post]
 func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	// 这里要校验参数 1. content 长度 2. 星级是必选项
+	status, ok := evaluationv1.EvaluationStatus_value[req.Status]
+	if !ok || req.Status == evaluationv1.EvaluationStatus_Folded.String() {
+		return ginx.Result{
+			Code: errs.EvaluationInvalidInput,
+			Msg:  "不合法的课评状态",
+		}, errors.New("不合法的课评状态")
+	}
+	if req.Id == 0 && req.Status != evaluationv1.EvaluationStatus_Public.String() {
+		// 创建时 status 必须为 public
+		return ginx.Result{
+			Code: errs.EvaluationInvalidInput,
+			Msg:  "创建时必须以Public状态创建",
+		}, errors.New("非Public创建")
+	}
 	if len([]rune(req.Content)) > 450 {
 		return ginx.Result{
 			Code: errs.EvaluationInvalidInput,
@@ -95,14 +109,6 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClai
 			}
 			featureTags = append(featureTags, tagv1.FeatureTag(tag))
 		}
-	}
-	// status 不能是folded
-	status, ok := evaluationv1.EvaluationStatus_value[req.Status]
-	if !ok || req.Status == evaluationv1.EvaluationStatus_Folded.String() {
-		return ginx.Result{
-			Code: errs.EvaluationInvalidInput,
-			Msg:  "不合法的课评状态",
-		}, errors.New("不合法的课评状态")
 	}
 
 	var res *evaluationv1.SaveResponse

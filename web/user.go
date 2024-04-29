@@ -1,8 +1,10 @@
 package web
 
 import (
+	"errors"
 	ccnuv1 "github.com/MuxiKeStack/be-api/gen/proto/ccnu/v1"
 	gradev1 "github.com/MuxiKeStack/be-api/gen/proto/grade/v1"
+	pointv1 "github.com/MuxiKeStack/be-api/gen/proto/point/v1"
 	userv1 "github.com/MuxiKeStack/be-api/gen/proto/user/v1"
 	"github.com/MuxiKeStack/bff/errs"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
@@ -10,24 +12,33 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/sync/errgroup"
+	"maps"
 	"net/http"
 	"strconv"
 )
 
 type UserHandler struct {
 	ijwt.Handler
-	userSvc  userv1.UserServiceClient
-	ccnuSvc  ccnuv1.CCNUServiceClient
-	gradeSvc gradev1.GradeServiceClient
+	userSvc       userv1.UserServiceClient
+	ccnuSvc       ccnuv1.CCNUServiceClient
+	gradeSvc      gradev1.GradeServiceClient
+	pointSvc      pointv1.PointServiceClient
+	allPointTitle map[string]bool
 }
 
 func NewUserHandler(hdl ijwt.Handler, userSvc userv1.UserServiceClient, ccnuSvc ccnuv1.CCNUServiceClient,
-	gradeSvc gradev1.GradeServiceClient) *UserHandler {
+	gradeSvc gradev1.GradeServiceClient, pointSvc pointv1.PointServiceClient) *UserHandler {
+	allPointTitle := make(map[string]bool, len(pointv1.Title_value))
+	for title := range pointv1.Title_value {
+		allPointTitle[title] = false
+	}
 	return &UserHandler{
-		Handler:  hdl,
-		userSvc:  userSvc,
-		ccnuSvc:  ccnuSvc,
-		gradeSvc: gradeSvc,
+		Handler:       hdl,
+		userSvc:       userSvc,
+		ccnuSvc:       ccnuSvc,
+		gradeSvc:      gradeSvc,
+		pointSvc:      pointSvc,
+		allPointTitle: allPointTitle,
 	}
 }
 
@@ -163,13 +174,32 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 // @Success 200 {object} ginx.Result "Success"
 // @Router /users/edit [post]
 func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims) (ginx.Result, error) {
-	_, err := h.userSvc.UpdateNonSensitiveInfo(ctx, &userv1.UpdateNonSensitiveInfoRequest{
-		User: &userv1.User{
-			Id:       uc.Uid,
-			Avatar:   req.Avatar,
-			Nickname: req.Nickname,
-		},
+	usingTitle, exists := pointv1.Title_value[req.UsingTitle]
+	if !exists {
+		return ginx.Result{
+			Code: errs.UserInvalidInput,
+			Msg:  "无效的title",
+		}, errors.New("无效的title")
+	}
+	var eg errgroup.Group
+	eg.Go(func() error {
+		_, err := h.pointSvc.SaveUsingTitleOfUser(ctx, &pointv1.SaveUsingTitleOfUserRequest{
+			Uid:   uc.Uid,
+			Title: pointv1.Title(usingTitle),
+		})
+		return err
 	})
+	eg.Go(func() error {
+		_, err := h.userSvc.UpdateNonSensitiveInfo(ctx, &userv1.UpdateNonSensitiveInfoRequest{
+			User: &userv1.User{
+				Id:       uc.Uid,
+				Avatar:   req.Avatar,
+				Nickname: req.Nickname,
+			},
+		})
+		return err
+	})
+	err := eg.Wait()
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,
@@ -190,9 +220,11 @@ func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims
 // @Router /users/profile [get]
 func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
 	var (
-		eg        errgroup.Group
-		userRes   *userv1.ProfileResponse
-		statusRes *gradev1.GetSignStatusResponse
+		eg             errgroup.Group
+		userRes        *userv1.ProfileResponse
+		statusRes      *gradev1.GetSignStatusResponse
+		titleOwnership map[string]bool
+		usingTitle     string
 	)
 	eg.Go(func() error {
 		var er error
@@ -203,6 +235,19 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 		var er error
 		statusRes, er = h.gradeSvc.GetSignStatus(ctx, &gradev1.GetSignStatusRequest{Uid: uc.Uid})
 		return er
+	})
+	// 聚合title信息
+	eg.Go(func() error {
+		titleRes, er := h.pointSvc.GetTitleOfUser(ctx, &pointv1.GetTitleOfUserRequest{Uid: uc.Uid})
+		if er != nil {
+			return er
+		}
+		titleOwnership = maps.Clone(h.allPointTitle)
+		for _, title := range titleRes.GetTitleOwned() {
+			titleOwnership[title.String()] = true
+		}
+		usingTitle = titleRes.GetUsingTitle().String()
+		return nil
 	})
 	err := eg.Wait()
 	if err != nil {
@@ -220,6 +265,8 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 			Nickname:             userRes.GetUser().GetNickname(),
 			New:                  userRes.GetUser().GetNew(),
 			GradeSharingIsSigned: statusRes.GetIsSigned(),
+			UsingTitle:           usingTitle,
+			TitleOwnership:       titleOwnership,
 			Utime:                userRes.GetUser().GetUtime(),
 			Ctime:                userRes.GetUser().GetCtime(),
 		},

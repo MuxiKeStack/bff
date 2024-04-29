@@ -44,6 +44,8 @@ grpc:
       endpoint: "discovery:///static"
     answer:
       endpoint: "discovery:///answer"
+    point:
+      endpoint: "discovery:///point"
 
 jwt:
   jwtKey: "mc8QAegcrdOmGwQthrx3cgd2hd8CVfaH"
