@@ -49,3 +49,7 @@ const (
 	AnswerInvalidInput = 409001
 	AnswerPermissionDenied
 )
+
+const (
+	PointsNotEnough = 410001
+)

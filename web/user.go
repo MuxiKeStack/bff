@@ -175,7 +175,7 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 // @Router /users/edit [post]
 func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	usingTitle, exists := pointv1.Title_value[req.UsingTitle]
-	if !exists {
+	if !exists || req.UsingTitle == pointv1.Title_None.String() {
 		return ginx.Result{
 			Code: errs.UserInvalidInput,
 			Msg:  "无效的title",
@@ -200,15 +200,22 @@ func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims
 		return err
 	})
 	err := eg.Wait()
-	if err != nil {
+	switch {
+	case err == nil:
+		return ginx.Result{
+			Msg: "Success",
+		}, nil
+	case pointv1.IsPointNotEnough(err):
+		return ginx.Result{
+			Code: errs.PointsNotEnough,
+			Msg:  "积分不足",
+		}, err
+	default:
 		return ginx.Result{
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
-	return ginx.Result{
-		Msg: "Success",
-	}, nil
 }
 
 // @Summary 获取用户信息[自己]
@@ -243,6 +250,7 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 			return er
 		}
 		titleOwnership = maps.Clone(h.allPointTitle)
+		delete(titleOwnership, pointv1.Title_None.String())
 		for _, title := range titleRes.GetOwnedTitles() {
 			titleOwnership[title.String()] = true
 		}
