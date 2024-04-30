@@ -243,7 +243,7 @@ func (h *UserHandler) Profile(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result
 			return er
 		}
 		titleOwnership = maps.Clone(h.allPointTitle)
-		for _, title := range titleRes.GetTitleOwned() {
+		for _, title := range titleRes.GetOwnedTitles() {
 			titleOwnership[title.String()] = true
 		}
 		usingTitle = titleRes.GetUsingTitle().String()
