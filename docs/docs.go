@@ -1382,6 +1382,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/points/users/mine": {
+            "get": {
+                "description": "获取包括积分、下一级所需积分和等级在内的当前用户的积分信息。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "积分"
+                ],
+                "summary": "获取用户的积分信息",
+                "responses": {
+                    "200": {
+                        "description": "成功响应",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.PointInfoVo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/questions/count": {
             "get": {
                 "description": "获取指定业务相关的问题数量。",
@@ -2623,6 +2655,20 @@ const docTemplate = `{
                 }
             }
         },
+        "web.PointInfoVo": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "type": "integer"
+                },
+                "next_level_points": {
+                    "type": "integer"
+                },
+                "points": {
+                    "type": "integer"
+                }
+            }
+        },
         "web.ProfileCourseVo": {
             "type": "object",
             "properties": {
@@ -2809,6 +2855,9 @@ const docTemplate = `{
                 },
                 "nickname": {
                     "type": "string"
+                },
+                "using_title": {
+                    "type": "string"
                 }
             }
         },
@@ -2835,6 +2884,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "studentId": {
+                    "type": "string"
+                },
+                "title_ownership": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "boolean"
+                    }
+                },
+                "using_title": {
                     "type": "string"
                 },
                 "utime": {
