@@ -137,6 +137,17 @@ definitions:
       keyword:
         type: string
     type: object
+  staticv1.Static:
+    properties:
+      content:
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+    type: object
   web.AnswerPublishReq:
     properties:
       content:
@@ -389,6 +400,10 @@ definitions:
     properties:
       content:
         type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
       name:
         type: string
     type: object
@@ -410,11 +425,6 @@ definitions:
       teacher:
         type: string
       type:
-        type: string
-    type: object
-  web.StaticVo:
-    properties:
-      content:
         type: string
     type: object
   web.UserEditReq:
@@ -1628,15 +1638,15 @@ paths:
       summary: 删除搜索历史
       tags:
       - 搜索
-  /statics/{name}:
+  /statics:
     get:
       consumes:
       - application/json
       description: 根据静态资源名称获取静态资源的内容。
       parameters:
       - description: 静态资源名称
-        in: path
-        name: name
+        in: query
+        name: static_name
         required: true
         type: string
       produces:
@@ -1649,9 +1659,37 @@ paths:
             - $ref: '#/definitions/ginx.Result'
             - properties:
                 data:
-                  $ref: '#/definitions/web.StaticVo'
+                  $ref: '#/definitions/staticv1.Static'
               type: object
-      summary: 获取静态资源
+      summary: 获取静态资源[精确名称]
+      tags:
+      - 静态
+  /statics/match/labels:
+    get:
+      consumes:
+      - multipart/form-data
+      description: 根据静labels匹配合适的静态资源
+      parameters:
+      - description: 标签：标明匹配哪一类的资源
+        in: query
+        name: labels[type]
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/staticv1.Static'
+                  type: array
+              type: object
+      summary: 获取静态资源[标签匹配]
       tags:
       - 静态
   /statics/save:
@@ -1699,7 +1737,7 @@ paths:
           description: 成功
           schema:
             $ref: '#/definitions/ginx.Result'
-      summary: 保存静态内容[文件]
+      summary: 保存静态内容[文件][废弃]
       tags:
       - 静态
   /users/:userId/profile:

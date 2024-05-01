@@ -1920,6 +1920,97 @@ const docTemplate = `{
                 }
             }
         },
+        "/statics": {
+            "get": {
+                "description": "根据静态资源名称获取静态资源的内容。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "静态"
+                ],
+                "summary": "获取静态资源[精确名称]",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "静态资源名称",
+                        "name": "static_name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/staticv1.Static"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/statics/match/labels": {
+            "get": {
+                "description": "根据静labels匹配合适的静态资源",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "静态"
+                ],
+                "summary": "获取静态资源[标签匹配]",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "标签：标明匹配哪一类的资源",
+                        "name": "labels[type]",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/staticv1.Static"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/statics/save": {
             "post": {
                 "description": "保存静态内容",
@@ -1966,7 +2057,7 @@ const docTemplate = `{
                 "tags": [
                     "静态"
                 ],
-                "summary": "保存静态内容[文件]",
+                "summary": "保存静态内容[文件][废弃]",
                 "parameters": [
                     {
                         "type": "string",
@@ -1988,50 +2079,6 @@ const docTemplate = `{
                         "description": "成功",
                         "schema": {
                             "$ref": "#/definitions/ginx.Result"
-                        }
-                    }
-                }
-            }
-        },
-        "/statics/{name}": {
-            "get": {
-                "description": "根据静态资源名称获取静态资源的内容。",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "静态"
-                ],
-                "summary": "获取静态资源",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "静态资源名称",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/ginx.Result"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/web.StaticVo"
-                                        }
-                                    }
-                                }
-                            ]
                         }
                     }
                 }
@@ -2425,6 +2472,23 @@ const docTemplate = `{
                 }
             }
         },
+        "staticv1.Static": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "web.AnswerPublishReq": {
             "type": "object",
             "properties": {
@@ -2803,6 +2867,12 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "name": {
                     "type": "string"
                 }
@@ -2835,14 +2905,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.StaticVo": {
-            "type": "object",
-            "properties": {
-                "content": {
                     "type": "string"
                 }
             }

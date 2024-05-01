@@ -26,29 +26,29 @@ func NewStaticHandler(staticClient staticv1.StaticServiceClient, fileToHTMLConve
 
 func (h *StaticHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	sg := s.Group("/statics")
-	sg.GET("/:name", ginx.Wrap(h.GetStatic))
+	sg.GET("", ginx.WrapReq(h.GetStaticByName))
+	sg.GET("/match/labels", ginx.Wrap(h.GetStaticByLabels))
 	// 因为没有管理员系统，所以直接将管理员写入配置文件
 	sg.POST("/save", authMiddleware, ginx.WrapClaimsAndReq(h.SaveStatic))
 	sg.POST("/save_file", authMiddleware, ginx.WrapClaimsAndReq(h.SaveStaticByFile))
 }
 
-// @Summary 获取静态资源
+// @Summary 获取静态资源[精确名称]
 // @Description 根据静态资源名称获取静态资源的内容。
 // @Tags 静态
 // @Accept json
 // @Produce json
-// @Param name path string true "静态资源名称"
-// @Success 200 {object} ginx.Result{data=StaticVo} "成功"
-// @Router /statics/{name} [get]
-func (h *StaticHandler) GetStatic(ctx *gin.Context) (ginx.Result, error) {
-	name := ctx.Param("name")
-	if name == "" {
+// @Param static_name query string true "静态资源名称"
+// @Success 200 {object} ginx.Result{data=staticv1.Static} "成功"
+// @Router /statics [get]
+func (h *StaticHandler) GetStaticByName(ctx *gin.Context, req GetStaticByNameReq) (ginx.Result, error) {
+	if req.StaticName == "" {
 		return ginx.Result{
 			Code: errs.StaticInvalidInput,
 			Msg:  "静态名称不合法",
 		}, errors.New("静态名称不合法")
 	}
-	res, err := h.staticClient.GetStaticByName(ctx, &staticv1.GetStaticByNameRequest{Name: name})
+	res, err := h.staticClient.GetStaticByName(ctx, &staticv1.GetStaticByNameRequest{Name: req.StaticName})
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,
@@ -56,10 +56,8 @@ func (h *StaticHandler) GetStatic(ctx *gin.Context) (ginx.Result, error) {
 		}, err
 	}
 	return ginx.Result{
-		Msg: "Success",
-		Data: StaticVo{
-			Content: res.GetStatic().GetContent(),
-		},
+		Msg:  "Success",
+		Data: res.GetStatic(),
 	}, nil
 }
 
@@ -89,6 +87,7 @@ func (h *StaticHandler) SaveStatic(ctx *gin.Context, req SaveStaticReq, uc ijwt.
 		Static: &staticv1.Static{
 			Name:    req.Name,
 			Content: req.Content,
+			Labels:  req.Labels,
 		},
 	})
 	if err != nil {
@@ -102,7 +101,7 @@ func (h *StaticHandler) SaveStatic(ctx *gin.Context, req SaveStaticReq, uc ijwt.
 	}, nil
 }
 
-// @Summary 保存静态内容[文件]
+// @Summary 保存静态内容[文件][废弃]
 // @Description 通过上传文件保存静态内容，目前仅支持.html文件
 // @Tags 静态
 // @Accept multipart/form-data
@@ -177,6 +176,7 @@ func (h *StaticHandler) SaveStaticByFile(ctx *gin.Context, req SaveStaticByFileR
 		Static: &staticv1.Static{
 			Name:    req.Name,
 			Content: htmlContent,
+			Labels:  req.Labels,
 		},
 	})
 	if err != nil {
@@ -193,4 +193,35 @@ func (h *StaticHandler) SaveStaticByFile(ctx *gin.Context, req SaveStaticByFileR
 func (h *StaticHandler) isAdmin(studentId string) bool {
 	_, exists := h.Administrators[studentId]
 	return exists
+}
+
+// @Summary 获取静态资源[标签匹配]
+// @Description 根据静labels匹配合适的静态资源
+// @Tags 静态
+// @Accept multipart/form-data
+// @Produce json
+// @Param labels[type] query string true "标签：标明匹配哪一类的资源"
+// @Success 200 {object} ginx.Result{data=[]staticv1.Static} "成功"
+// @Router /statics/match/labels [get]
+func (h *StaticHandler) GetStaticByLabels(ctx *gin.Context) (ginx.Result, error) {
+	labels := ctx.QueryMap("labels")
+	if len(labels) == 0 {
+		return ginx.Result{
+			Code: errs.StaticInvalidInput,
+			Msg:  "labels不能为空",
+		}, nil
+	}
+	res, err := h.staticClient.GetStaticsByLabels(ctx, &staticv1.GetStaticsByLabelsRequest{
+		Labels: labels,
+	})
+	if err != nil {
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: res.GetStatics(),
+	}, nil
 }
