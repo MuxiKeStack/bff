@@ -29,6 +29,7 @@ const (
 
 const (
 	CommentInvalidInput = 405001
+	CommentNotFound     = 405002
 )
 
 const (

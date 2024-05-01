@@ -644,6 +644,32 @@ paths:
       summary: 删除评论
       tags:
       - 评论
+  /comments/{commentId}/detail:
+    get:
+      consumes:
+      - application/json
+      description: 根据评论ID获取评论。
+      parameters:
+      - description: 评论ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功删除评论
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.CommentVo'
+              type: object
+      summary: 获取评论详情
+      tags:
+      - 评论
   /comments/count:
     get:
       consumes:

@@ -25,7 +25,9 @@ func (h *CommentHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handle
 	cg.GET("/list", ginx.WrapReq(h.List))
 	cg.GET("/replies/list", ginx.WrapReq(h.ListReplies))
 	cg.GET("/count", ginx.WrapReq(h.Count)) // 这个数目要缓存好
+	cg.GET("/:commentId/detail", ginx.Wrap(h.GetDetailById))
 	cg.DELETE("/:commentId", authMiddleware, ginx.WrapClaims(h.Delete))
+
 }
 
 // Publish 发布一个新评论
@@ -243,4 +245,56 @@ func (h *CommentHandler) Delete(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resu
 	return ginx.Result{
 		Msg: "Success",
 	}, nil
+}
+
+// GetDetailById 获取评论详情
+// @Summary 获取评论详情
+// @Description 根据评论ID获取评论。
+// @Tags 评论
+// @Accept json
+// @Produce json
+// @Param commentId path int64 true "评论ID"
+// @Success 200 {object} ginx.Result{data=CommentVo} "成功删除评论"
+// @Router /comments/{commentId}/detail [get]
+func (h *CommentHandler) GetDetailById(ctx *gin.Context) (ginx.Result, error) {
+	cidStr := ctx.Param("commentId")
+	cid, err := strconv.ParseInt(cidStr, 10, 64)
+	if err != nil {
+		return ginx.Result{
+			Code: errs.CourseInvalidInput,
+			Msg:  "输入参数有误",
+		}, err
+	}
+	res, err := h.commentClient.GetComment(ctx, &commentv1.GetCommentRequest{
+		CommentId: cid,
+	})
+	switch {
+	case err == nil:
+		return ginx.Result{
+			Msg: "Success",
+			Data: CommentVo{
+				Id:              res.GetComment().GetId(),
+				CommentatorId:   res.GetComment().GetCommentatorId(),
+				Biz:             res.GetComment().GetBiz().String(),
+				BizId:           res.GetComment().GetBizId(),
+				Content:         res.GetComment().GetContent(),
+				RootCommentId:   res.GetComment().GetRootComment().GetId(),
+				ParentCommentId: res.GetComment().GetParentComment().GetId(),
+				ReplyToUid:      res.GetComment().GetReplyToUid(),
+				Utime:           res.GetComment().GetUtime(),
+				Ctime:           res.GetComment().GetCtime(),
+			},
+		}, nil
+	case commentv1.IsCommentNotFound(err):
+		return ginx.Result{
+			Code: errs.CommentNotFound,
+			Msg:  "评论不存在",
+			Data: nil,
+		}, err
+	default:
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
 }
