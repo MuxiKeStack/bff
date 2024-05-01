@@ -127,51 +127,65 @@ func (h *AnswerHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Resul
 			Msg:  "不合法的answerId",
 		}, err
 	}
-	answerRes, err := h.answerClient.Detail(ctx, &answerv1.DetailRequest{
-		AnswerId: aid,
+	var (
+		eg         errgroup.Group
+		answerRes  *answerv1.DetailResponse
+		commentRes *commentv1.CountCommentResponse
+		stanceRes  *stancev1.GetUserStanceResponse
+	)
+	eg.Go(func() error {
+		var er error
+		answerRes, er = h.answerClient.Detail(ctx, &answerv1.DetailRequest{
+			AnswerId: aid,
+		})
+		return er
 	})
-	if err != nil {
+	eg.Go(func() error {
+		var er error
+		commentRes, er = h.commentClient.CountComment(ctx, &commentv1.CountCommentRequest{
+			Biz:   commentv1.Biz_Answer,
+			BizId: aid,
+		})
+		return er
+	})
+	eg.Go(func() error {
+		var er error
+		stanceRes, er = h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
+			Uid:   uc.Uid,
+			Biz:   stancev1.Biz_Answer,
+			BizId: aid,
+		})
+		return er
+	})
+	err = eg.Wait()
+	switch {
+	case err == nil:
+		return ginx.Result{
+			Msg: "Success",
+			Data: AnswerVo{
+				Id:                answerRes.GetAnswer().GetId(),
+				PublisherId:       answerRes.GetAnswer().GetPublisherId(),
+				QuestionId:        answerRes.GetAnswer().GetQuestionId(),
+				Content:           answerRes.GetAnswer().GetContent(),
+				Stance:            int32(stanceRes.GetStance()),
+				TotalSupportCount: stanceRes.GetTotalSupports(),
+				TotalOpposeCount:  stanceRes.GetTotalOpposes(),
+				TotalCommentCount: commentRes.GetCount(),
+				Utime:             answerRes.GetAnswer().GetUtime(),
+				Ctime:             answerRes.GetAnswer().GetCtime(),
+			},
+		}, nil
+	case answerv1.IsAnswerNotFound(err):
+		return ginx.Result{
+			Code: errs.AnswerNotFound,
+			Msg:  "回答不存在",
+		}, err
+	default:
 		return ginx.Result{
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
-	commentRes, err := h.commentClient.CountComment(ctx, &commentv1.CountCommentRequest{
-		Biz:   commentv1.Biz_Answer,
-		BizId: aid,
-	})
-	if err != nil {
-		return ginx.Result{
-			Code: errs.InternalServerError,
-			Msg:  "系统异常",
-		}, err
-	}
-	stanceRes, err := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
-		Uid:   uc.Uid,
-		Biz:   stancev1.Biz_Answer,
-		BizId: aid,
-	})
-	if err != nil {
-		return ginx.Result{
-			Code: errs.InternalServerError,
-			Msg:  "系统异常",
-		}, err
-	}
-	return ginx.Result{
-		Msg: "Success",
-		Data: AnswerVo{
-			Id:                answerRes.GetAnswer().GetId(),
-			PublisherId:       answerRes.GetAnswer().GetPublisherId(),
-			QuestionId:        answerRes.GetAnswer().GetQuestionId(),
-			Content:           answerRes.GetAnswer().GetContent(),
-			Stance:            int32(stanceRes.GetStance()),
-			TotalSupportCount: stanceRes.GetTotalSupports(),
-			TotalOpposeCount:  stanceRes.GetTotalOpposes(),
-			TotalCommentCount: commentRes.GetCount(),
-			Utime:             answerRes.GetAnswer().GetUtime(),
-			Ctime:             answerRes.GetAnswer().GetCtime(),
-		},
-	}, nil
 }
 
 // ListForQuestion 回答列表[问题]

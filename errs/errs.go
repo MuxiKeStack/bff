@@ -47,8 +47,9 @@ const (
 )
 
 const (
-	AnswerInvalidInput = 409001
-	AnswerPermissionDenied
+	AnswerInvalidInput     = 409001
+	AnswerPermissionDenied = 409002
+	AnswerNotFound         = 409003
 )
 
 const (
