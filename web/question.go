@@ -96,7 +96,7 @@ func (h *QuestionHandler) RecommendationInvitees(ctx *gin.Context, req Recommend
 	qid, err := strconv.ParseInt(qidStr, 10, 64)
 	if err != nil {
 		return ginx.Result{
-			Code: errs.CourseInvalidInput,
+			Code: errs.QuestionInvalidInput,
 			Msg:  "输入参数有误",
 		}, err
 	}
@@ -148,31 +148,38 @@ func (h *QuestionHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 	qid, err := strconv.ParseInt(qidStr, 10, 64)
 	if err != nil {
 		return ginx.Result{
-			Code: errs.CourseInvalidInput,
+			Code: errs.QuestionInvalidInput,
 			Msg:  "输入参数有误",
 		}, err
 	}
 	res, err := h.question.GetDetailById(ctx, &questionv1.GetDetailByIdRequest{
 		QuestionId: qid,
 	})
-	if err != nil {
+	switch {
+	case err == nil:
+		return ginx.Result{
+			Msg: "Success",
+			Data: QuestionVo{
+				Id:           res.GetQuestion().GetId(),
+				QuestionerId: res.GetQuestion().GetQuestionerId(),
+				Biz:          res.GetQuestion().GetBiz().String(),
+				BizId:        res.GetQuestion().GetBizId(),
+				Content:      res.GetQuestion().GetContent(),
+				Utime:        res.GetQuestion().GetUtime(),
+				Ctime:        res.GetQuestion().GetCtime(),
+			},
+		}, nil
+	case questionv1.IsQuestionNotFound(err):
+		return ginx.Result{
+			Code: errs.QuestionNotFound,
+			Msg:  "提问不存在",
+		}, err
+	default:
 		return ginx.Result{
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
-	return ginx.Result{
-		Msg: "Success",
-		Data: QuestionVo{
-			Id:           res.GetQuestion().GetId(),
-			QuestionerId: res.GetQuestion().GetQuestionerId(),
-			Biz:          res.GetQuestion().GetBiz().String(),
-			BizId:        res.GetQuestion().GetBizId(),
-			Content:      res.GetQuestion().GetContent(),
-			Utime:        res.GetQuestion().GetUtime(),
-			Ctime:        res.GetQuestion().GetCtime(),
-		},
-	}, nil
 }
 
 // InviteUserToAnswer 邀请用户回答问题。

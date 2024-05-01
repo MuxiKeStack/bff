@@ -20,7 +20,9 @@ const (
 )
 
 const (
-	QuestionBizNotFound = 403001
+	QuestionInvalidInput = 403001
+	QuestionNotFound     = 403002
+	QuestionBizNotFound  = 403003
 )
 
 const (
