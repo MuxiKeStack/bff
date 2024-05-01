@@ -12,6 +12,7 @@ const (
 
 	// UserInvalidSidOrPassword 用户输入的学号或者密码不对
 	UserInvalidSidOrPassword = 401002
+	UserNotFound             = 401003
 )
 
 const (

@@ -298,18 +298,25 @@ func (h *UserHandler) ProfileById(ctx *gin.Context) (ginx.Result, error) {
 		}, err
 	}
 	res, err := h.userSvc.Profile(ctx, &userv1.ProfileRequest{Uid: uid})
-	if err != nil {
+	switch {
+	case err == nil:
+		return ginx.Result{
+			Msg: "Success",
+			Data: UserPublicProfileVo{
+				Id:       res.GetUser().GetId(),
+				Avatar:   res.GetUser().GetAvatar(),
+				Nickname: res.GetUser().GetNickname(),
+			},
+		}, nil
+	case userv1.IsUserNotFound(err):
+		return ginx.Result{
+			Code: errs.UserNotFound,
+			Msg:  "用户不存在",
+		}, err
+	default:
 		return ginx.Result{
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
-	return ginx.Result{
-		Msg: "Success",
-		Data: UserPublicProfileVo{
-			Id:       res.GetUser().GetId(),
-			Avatar:   res.GetUser().GetAvatar(),
-			Nickname: res.GetUser().GetNickname(),
-		},
-	}, nil
 }
