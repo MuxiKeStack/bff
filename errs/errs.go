@@ -25,6 +25,7 @@ const (
 const (
 	EvaluationInvalidInput     = 404001
 	EvaluationPermissionDenied = 404002
+	EvaluationNotFound         = 404003
 )
 
 const (

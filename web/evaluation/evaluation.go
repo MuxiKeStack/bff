@@ -225,10 +225,17 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 		EvaluationId: eid,
 	})
 	if err != nil {
-		return ginx.Result{
-			Code: errs.InternalServerError,
-			Msg:  "系统异常",
-		}, err
+		if evaluationv1.IsEvaluationNotFound(err) {
+			return ginx.Result{
+				Code: errs.EvaluationNotFound,
+				Msg:  "课评不存在",
+			}, err
+		} else {
+			return ginx.Result{
+				Code: errs.InternalServerError,
+				Msg:  "系统异常",
+			}, err
+		}
 	}
 	if res.GetEvaluation().GetStatus() != evaluationv1.EvaluationStatus_Public &&
 		res.GetEvaluation().GetPublisherId() != uc.Uid {
