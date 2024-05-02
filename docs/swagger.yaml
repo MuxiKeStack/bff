@@ -1292,6 +1292,11 @@ paths:
         name: last_time
         required: true
         type: integer
+      - description: 查询方向 before 或 after last_time
+        in: query
+        name: direction
+        required: true
+        type: string
       - description: 返回消息数量限制
         in: query
         name: limit

@@ -59,3 +59,5 @@ const (
 const (
 	PointsNotEnough = 410001
 )
+
+const FeedInvalidInput = 411001

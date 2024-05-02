@@ -1344,6 +1344,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "查询方向 before 或 after last_time",
+                        "name": "direction",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
                         "description": "返回消息数量限制",
                         "name": "limit",
