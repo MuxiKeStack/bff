@@ -1345,7 +1345,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "查询方向 before 或 after last_time",
+                        "description": "查询方向 Before 或 After last_time",
                         "name": "direction",
                         "in": "query",
                         "required": true
@@ -1824,7 +1824,7 @@ const docTemplate = `{
         },
         "/questions/{questionId}/recommendation_invitees": {
             "get": {
-                "description": "为特定问题检索推荐的邀请人列表。",
+                "description": "为特定问题检索推荐的邀请人列表，会排除掉自己。",
                 "consumes": [
                     "application/json"
                 ],

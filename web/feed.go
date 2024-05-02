@@ -29,7 +29,7 @@ func (h *FeedHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFu
 // @Accept json
 // @Produce json
 // @Param last_time query int64 true "上一条消息提醒的发生时间ctime"
-// @Param direction query string true "查询方向 before 或 after last_time"
+// @Param direction query string true "查询方向 Before 或 After last_time"
 // @Param limit query int64 true "返回消息数量限制"
 // @Success 200 {object} ginx.Result{data=[]feedv1.FeedEvent} "成功返回结果"
 // @Router /feed/events_list [get]

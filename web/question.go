@@ -82,7 +82,7 @@ func (h *QuestionHandler) Publish(ctx *gin.Context, req QuestionPublishReq, uc i
 
 // RecommendationInvitees 获取问题的推荐邀请。
 // @Summary 获取推荐邀请人
-// @Description 为特定问题检索推荐的邀请人列表。
+// @Description 为特定问题检索推荐的邀请人列表，会排除掉自己。
 // @Tags 问题
 // @Accept json
 // @Produce json
