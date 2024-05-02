@@ -88,6 +88,19 @@ definitions:
       status:
         type: string
     type: object
+  feedv1.FeedEvent:
+    properties:
+      content:
+        type: string
+      ctime:
+        type: integer
+      id:
+        type: integer
+      type:
+        type: string
+      uid:
+        type: integer
+    type: object
   ginx.Result:
     properties:
       code:
@@ -1268,6 +1281,39 @@ paths:
       summary: 发布课评
       tags:
       - 课评
+  /feed/events_list:
+    get:
+      consumes:
+      - application/json
+      description: 根据上一次事件ctime，进行增量拉取
+      parameters:
+      - description: 上一条消息提醒的发生时间ctime
+        in: query
+        name: last_time
+        required: true
+        type: integer
+      - description: 返回消息数量限制
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回结果
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/feedv1.FeedEvent'
+                  type: array
+              type: object
+      summary: 拉取feed事件
+      tags:
+      - feed
   /grades/courses/{courseId}:
     get:
       consumes:

@@ -1322,6 +1322,60 @@ const docTemplate = `{
                 }
             }
         },
+        "/feed/events_list": {
+            "get": {
+                "description": "根据上一次事件ctime，进行增量拉取",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "feed"
+                ],
+                "summary": "拉取feed事件",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "上一条消息提醒的发生时间ctime",
+                        "name": "last_time",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "返回消息数量限制",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回结果",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/feedv1.FeedEvent"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/grades/courses/{courseId}": {
             "get": {
                 "description": "根据课程ID获取该课程的成绩详情",
@@ -2440,6 +2494,26 @@ const docTemplate = `{
             "properties": {
                 "status": {
                     "type": "string"
+                }
+            }
+        },
+        "feedv1.FeedEvent": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "ctime": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "integer"
                 }
             }
         },
