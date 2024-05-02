@@ -47,6 +47,8 @@ func InitWebServer() *ginx.Server {
 	staticHandler := ioc.InitStaticHandler(staticServiceClient)
 	answerHandler := web.NewAnswerHandler(answerServiceClient, courseServiceClient, questionServiceClient, commentServiceClient, stanceServiceClient)
 	pointHandler := web.NewPointHandler(pointServiceClient)
-	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler, staticHandler, answerHandler, pointHandler)
+	feedServiceClient := ioc.InitFeedClient(client)
+	feedHandler := web.NewFeedHandler(feedServiceClient)
+	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler, staticHandler, answerHandler, pointHandler, feedHandler)
 	return server
 }

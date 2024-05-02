@@ -46,6 +46,8 @@ grpc:
       endpoint: "discovery:///answer"
     point:
       endpoint: "discovery:///point"
+    feed:
+      endpoint: "discovery:///feed"
 
 jwt:
   jwtKey: "mc8QAegcrdOmGwQthrx3cgd2hd8CVfaH"

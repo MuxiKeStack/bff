@@ -12,6 +12,10 @@ type FeedHandler struct {
 	feedClient feedv1.FeedServiceClient
 }
 
+func NewFeedHandler(feedClient feedv1.FeedServiceClient) *FeedHandler {
+	return &FeedHandler{feedClient: feedClient}
+}
+
 func (h *FeedHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFunc) {
 	fg := s.Group("/feed")
 	fg.GET("/events_list", authMiddleware, ginx.WrapClaimsAndReq(h.GetFeedEventsList))
@@ -24,11 +28,14 @@ func (h *FeedHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerFu
 // @Tags feed
 // @Accept json
 // @Produce json
-// @Param last_time query int64 true "上一条消息的发生事件ctime"
+// @Param last_time query int64 true "上一条消息提醒的发生时间ctime"
 // @Param limit query int64 true "返回消息数量限制"
 // @Success 200 {object} ginx.Result{data=[]feedv1.FeedEvent} "成功返回结果"
 // @Router /feed/events_list [get]
 func (h *FeedHandler) GetFeedEventsList(ctx *gin.Context, req GetFeedEventsListReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	if req.Limit > 100 {
+		req.Limit = 100
+	}
 	res, err := h.feedClient.FindFeedEvents(ctx, &feedv1.FindFeedEventsRequest{
 		Uid:      uc.Uid,
 		LastTime: req.LastTime,
