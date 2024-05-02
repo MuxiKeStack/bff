@@ -36,7 +36,7 @@ func (h *QuestionHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.Handl
 	qg := s.Group("/questions")
 	qg.POST("/publish", authMiddleware, ginx.WrapClaimsAndReq(h.Publish))
 	qg.GET("/:questionId/detail", ginx.Wrap(h.Detail))
-	qg.GET("/:questionId/recommendation_invitees", ginx.WrapReq(h.RecommendationInvitees))
+	qg.GET("/:questionId/recommendation_invitees", authMiddleware, ginx.WrapClaimsAndReq(h.RecommendationInvitees))
 	qg.POST("/:questionId/invitees", authMiddleware, ginx.WrapClaimsAndReq(h.InviteUserToAnswer))
 	qg.GET("/count", ginx.WrapReq(h.CountBiz))
 	qg.GET("/list", ginx.WrapReq(h.ListBiz))
@@ -91,7 +91,7 @@ func (h *QuestionHandler) Publish(ctx *gin.Context, req QuestionPublishReq, uc i
 // @Param cur_uid query int true "当前id，游标的感觉" default(0)
 // @Success 200 {object} ginx.Result{data=[]InviteesVo} "Success"
 // @Router /questions/{questionId}/recommendation_invitees [get]
-func (h *QuestionHandler) RecommendationInvitees(ctx *gin.Context, req RecommendationInviteesReq) (ginx.Result, error) {
+func (h *QuestionHandler) RecommendationInvitees(ctx *gin.Context, req RecommendationInviteesReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	qidStr := ctx.Param("questionId")
 	qid, err := strconv.ParseInt(qidStr, 10, 64)
 	if err != nil {
@@ -104,7 +104,7 @@ func (h *QuestionHandler) RecommendationInvitees(ctx *gin.Context, req Recommend
 	res, err := h.question.GetRecommendationInviteeUids(ctx, &questionv1.GetRecommendationInviteeUidsRequest{
 		QuestionId: qid,
 		CurUid:     req.CurUid,
-		Limit:      req.Limit,
+		Limit:      req.Limit + 1, // 多拿一个，为了保证存在我自身的时候，也能返回给前端十个
 	})
 	if err != nil {
 		return ginx.Result{
@@ -112,8 +112,18 @@ func (h *QuestionHandler) RecommendationInvitees(ctx *gin.Context, req Recommend
 			Msg:  "系统异常",
 		}, err
 	}
+	invitees := make([]int64, 0, req.Limit)
+	for _, invitee := range res.GetInviteeUids() {
+		if invitee != uc.Uid {
+			invitees = append(invitees, invitee)
+		}
+	}
+	// 超过limit 只保留 limit
+	if len(invitees) > int(req.Limit) {
+		invitees = invitees[:req.Limit]
+	}
 	// 在这里聚合用户信息
-	inviteesVos := slice.Map(res.GetInviteeUids(), func(idx int, src int64) InviteesVo {
+	inviteesVos := slice.Map(invitees, func(idx int, src int64) InviteesVo {
 		// 降级了的话可以直接不聚合
 		res, err := h.user.Profile(ctx, &userv1.ProfileRequest{
 			Uid: src,
