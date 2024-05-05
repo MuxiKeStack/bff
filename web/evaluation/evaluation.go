@@ -111,7 +111,10 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClai
 		}
 	}
 
-	var res *evaluationv1.SaveResponse
+	var (
+		res     *evaluationv1.SaveResponse
+		saveErr error
+	)
 	// 下面涉及两个服务的原子性调用，需要使用分布式事务，这里的bff其实起到了聚合服务的作用...，引入实际意义聚合服务，目前没必要
 	// go的seatago框架相当不成熟，比如这个事务内部不能用errgroup并发这两个attach tag
 	err := tm.WithGlobalTx(ctx,
@@ -120,8 +123,7 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClai
 			Name:    "ATPublishAndTagTx",
 		},
 		func(ctx context.Context) error {
-			var er error
-			res, er = h.evaluationClient.Save(ctx, &evaluationv1.SaveRequest{
+			res, saveErr = h.evaluationClient.Save(ctx, &evaluationv1.SaveRequest{
 				Evaluation: &evaluationv1.Evaluation{
 					Id:          req.Id,
 					PublisherId: uc.Uid,
@@ -131,9 +133,10 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClai
 					Status:      evaluationv1.EvaluationStatus(status),
 				},
 			})
-			if er != nil {
-				return er
+			if saveErr != nil {
+				return saveErr
 			}
+			var er error
 			_, er = h.tagClient.AttachAssessmentTags(ctx, &tagv1.AttachAssessmentTagsRequest{
 				TaggerId: uc.Uid,
 				Biz:      tagv1.Biz_Course,
@@ -151,16 +154,24 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClai
 			})
 			return er
 		})
-	if err != nil {
+	switch {
+	case err == nil:
+		return ginx.Result{
+			Msg:  "Success",
+			Data: res.GetEvaluationId(), // 这里给前端标明是evaluationId
+		}, nil
+		// 检验saveErr
+	case evaluationv1.IsCanNotEvaluateUnattendedCourse(saveErr):
+		return ginx.Result{
+			Code: errs.EvaluationPermissionDenied,
+			Msg:  "不能评价未上过的课程",
+		}, saveErr
+	default:
 		return ginx.Result{
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
 	}
-	return ginx.Result{
-		Msg:  "Success",
-		Data: res.GetEvaluationId(), // 这里给前端标明是evaluationId
-	}, nil
 }
 
 // @Summary 变更课评状态
