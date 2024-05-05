@@ -2189,6 +2189,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/tube/access_token": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "图床"
+                ],
+                "summary": "获取图床访问令牌",
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/web.GetTubeTokenData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/users/:userId/profile": {
             "get": {
                 "consumes": [
@@ -2778,6 +2812,17 @@ const docTemplate = `{
             "properties": {
                 "stance": {
                     "type": "integer"
+                }
+            }
+        },
+        "web.GetTubeTokenData": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "domain_name": {
+                    "type": "string"
                 }
             }
         },

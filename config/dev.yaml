@@ -52,3 +52,9 @@ grpc:
 jwt:
   jwtKey: "mc8QAegcrdOmGwQthrx3cgd2hd8CVfaH"
   refreshKey: "Hx9g8TinCH30NqckgKfFO2KkbaeCUMmj"
+
+oss:
+  accessKey:
+  secretKey:
+  bucketName: kestack
+  domainName: kestackoss.muxixyz.com # CDN 域名

@@ -270,6 +270,13 @@ definitions:
       stance:
         type: integer
     type: object
+  web.GetTubeTokenData:
+    properties:
+      access_token:
+        type: string
+      domain_name:
+        type: string
+    type: object
   web.GradeVo:
     properties:
       final:
@@ -1817,6 +1824,25 @@ paths:
       summary: 保存静态内容[文件][废弃]
       tags:
       - 静态
+  /tube/access_token:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  $ref: '#/definitions/web.GetTubeTokenData'
+              type: object
+      summary: 获取图床访问令牌
+      tags:
+      - 图床
   /users/:userId/profile:
     get:
       consumes:

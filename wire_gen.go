@@ -49,6 +49,9 @@ func InitWebServer() *ginx.Server {
 	pointHandler := web.NewPointHandler(pointServiceClient)
 	feedServiceClient := ioc.InitFeedClient(client)
 	feedHandler := web.NewFeedHandler(feedServiceClient)
-	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler, staticHandler, answerHandler, pointHandler, feedHandler)
+	putPolicy := ioc.InitPutPolicy()
+	credentials := ioc.InitMac()
+	tubeHandler := ioc.InitTubeHandler(putPolicy, credentials)
+	server := ioc.InitGinServer(logger, handler, userHandler, courseHandler, questionHandler, evaluationHandler, commentHandler, searchHandler, gradeHandler, staticHandler, answerHandler, pointHandler, feedHandler, tubeHandler)
 	return server
 }
