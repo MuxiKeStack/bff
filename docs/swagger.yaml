@@ -14,6 +14,28 @@ definitions:
       utime:
         type: integer
     type: object
+  ccnuv1.Grade:
+    properties:
+      course_code:
+        type: string
+      course_name:
+        type: string
+      course_teacher:
+        type: string
+      final:
+        description: 期末
+        type: number
+      regular:
+        description: 平时
+        type: number
+      term:
+        type: string
+      total:
+        description: 总评
+        type: number
+      year:
+        type: string
+    type: object
   evaluation.EndorseReq:
     properties:
       stance:
@@ -1352,6 +1374,36 @@ paths:
                   type: array
               type: object
       summary: 获取课程成绩分布
+      tags:
+      - 成绩
+  /grades/list:
+    get:
+      parameters:
+      - description: 学年
+        in: query
+        name: year
+        required: true
+        type: string
+      - description: 学期
+        in: query
+        name: term
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回成绩数组
+          schema:
+            allOf:
+            - $ref: '#/definitions/ginx.Result'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ccnuv1.Grade'
+                  type: array
+              type: object
+      summary: 获取学生成绩
       tags:
       - 成绩
   /grades/share:

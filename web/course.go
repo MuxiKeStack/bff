@@ -108,7 +108,6 @@ func (h *CourseHandler) List(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result,
 			Data: courseVos,
 		}, nil
 	}
-
 	switch {
 	case ccnuv1.IsInvalidSidOrPwd(err):
 		// 学号密码错误，登出

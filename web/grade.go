@@ -35,6 +35,8 @@ func (h *GradeHandler) RegisterRoutes(s *gin.Engine, authMiddleware gin.HandlerF
 	g.POST("/sign", authMiddleware, ginx.WrapClaimsAndReq(h.Sign)) //签约
 	g.POST("/share", authMiddleware, ginx.WrapClaims(h.Share))
 	g.GET("/courses/:courseId", authMiddleware, ginx.WrapClaims(h.GetCourseGrades))
+	// TODO: 一个查询成绩的接口，给匣子使用的，之后迁移到匣子里，然后删除该接口
+	g.GET("/list", authMiddleware, ginx.WrapClaimsAndReq(h.GetGrades))
 }
 
 // Sign 成绩签约或取消
@@ -190,3 +192,48 @@ func (h *GradeHandler) GetCourseGrades(ctx *gin.Context, uc ijwt.UserClaims) (gi
 		}),
 	}, nil
 }
+
+// ----------
+// 写在一起方便删
+type GetGradesReq struct {
+	Year string `form:"year"`
+	Term string `form:"term"`
+}
+
+// GetGrades 获取学生成绩
+// @Summary 获取学生成绩
+// @Description
+// @Tags 成绩
+// @Produce json
+// @Param year query string true "学年"
+// @Param term query string true "学期"
+// @Success 200 {object} ginx.Result{data=[]ccnuv1.Grade} "成功返回成绩数组"
+// @Router /grades/list [get]
+func (h *GradeHandler) GetGrades(ctx *gin.Context, req GetGradesReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	res, err := h.ccnuClient.GetGrades(ctx, &ccnuv1.GetGradesRequest{
+		StudentId: uc.StudentId,
+		Password:  uc.Password,
+		Year:      req.Year,
+		Term:      req.Term,
+	})
+	switch {
+	case err == nil:
+	// 直接向下执行
+	case ccnuv1.IsInvalidSidOrPwd(err):
+		return ginx.Result{
+			Code: errs.UserInvalidSidOrPassword,
+			Msg:  "学号或密码错误",
+		}, nil
+	default:
+		return ginx.Result{
+			Code: errs.InternalServerError,
+			Msg:  "系统异常",
+		}, err
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: res.GetGrades(),
+	}, nil
+}
+
+// --------

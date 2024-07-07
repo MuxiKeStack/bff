@@ -1419,6 +1419,56 @@
                 }
             }
         },
+        "/grades/list": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "成绩"
+                ],
+                "summary": "获取学生成绩",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "学年",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "学期",
+                        "name": "term",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功返回成绩数组",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ginx.Result"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/ccnuv1.Grade"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/grades/share": {
             "post": {
                 "description": "用户主动发起一次分享自己的最新成绩",
@@ -2415,6 +2465,38 @@
                 },
                 "utime": {
                     "type": "integer"
+                }
+            }
+        },
+        "ccnuv1.Grade": {
+            "type": "object",
+            "properties": {
+                "course_code": {
+                    "type": "string"
+                },
+                "course_name": {
+                    "type": "string"
+                },
+                "course_teacher": {
+                    "type": "string"
+                },
+                "final": {
+                    "description": "期末",
+                    "type": "number"
+                },
+                "regular": {
+                    "description": "平时",
+                    "type": "number"
+                },
+                "term": {
+                    "type": "string"
+                },
+                "total": {
+                    "description": "总评",
+                    "type": "number"
+                },
+                "year": {
+                    "type": "string"
                 }
             }
         },
