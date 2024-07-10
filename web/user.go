@@ -71,7 +71,7 @@ func (h *UserHandler) LoginByCCNU(ctx *gin.Context, req LoginByCCNUReq) (ginx.Re
 	case ccnuv1.IsInvalidSidOrPwd(err):
 		return ginx.Result{
 			Code: errs.UserInvalidSidOrPassword,
-			Msg:  "登录失效，请重新登录",
+			Msg:  "学号或密码错误",
 		}, nil
 	default:
 		return ginx.Result{

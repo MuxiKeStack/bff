@@ -23,7 +23,7 @@ func (r *RetryCCNUClient) Login(ctx context.Context, in *ccnuv1.LoginRequest, op
 	for i := 0; i < r.retryCnt; i++ {
 		res, err = r.CCNUServiceClient.Login(ctx, in, opts...)
 		if err == nil || ccnuv1.IsInvalidSidOrPwd(err) {
-			return res, nil
+			return res, err
 		}
 	}
 	return nil, err
