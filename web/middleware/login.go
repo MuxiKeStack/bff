@@ -76,11 +76,11 @@ func (m *LoginMiddlewareBuilder) extractUserClaimsFromAuthorizationHeader(ctx *g
 		return ijwt.UserClaims{}, errors.New("token无效")
 	}
 	// token有效
-	// User-Agent
-	if uc.UserAgent != ctx.GetHeader("User-Agent") {
-		// 大概率是攻击者才会进入这个分支
-		return ijwt.UserClaims{}, errors.New("User-Agent验证：不安全")
-	}
+	//User-Agent
+	//if uc.UserAgent != ctx.GetHeader("User-Agent") {
+	//	// 大概率是攻击者才会进入这个分支
+	//	return ijwt.UserClaims{}, errors.New("User-Agent验证：不安全")
+	//}
 	ok, err := m.CheckSession(ctx, uc.Ssid)
 	if err != nil || ok {
 		// err如果是redis崩溃导致，考虑进行降级，不再验证是否退出 refresh_token降级的话收益会很少，因为是低频接口
