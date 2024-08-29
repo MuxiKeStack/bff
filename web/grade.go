@@ -8,7 +8,6 @@ import (
 	"github.com/MuxiKeStack/bff/events"
 	"github.com/MuxiKeStack/bff/pkg/ginx"
 	"github.com/MuxiKeStack/bff/web/ijwt"
-	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
 	"strconv"
 )
@@ -148,7 +147,7 @@ func (h *GradeHandler) Share(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result,
 // @Accept json
 // @Produce json
 // @Param courseId path int true "课程ID"
-// @Success 200 {object} ginx.Result{data=[]GradeVo} "成功返回成绩数组"
+// @Success 200 {object} ginx.Result{data=[]GradeChartVo} "成功返回成绩数组"
 // @Router /grades/courses/{courseId} [get]
 func (h *GradeHandler) GetCourseGrades(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
 	cidStr := ctx.Param("courseId")
@@ -179,17 +178,40 @@ func (h *GradeHandler) GetCourseGrades(ctx *gin.Context, uc ijwt.UserClaims) (gi
 			Msg:  "输入参数有误",
 		}, err
 	}
-	return ginx.Result{
-		Msg: "Success",
-		Data: slice.Map(gradesRes.GetGrades(), func(idx int, src *ccnuv1.Grade) GradeVo {
-			return GradeVo{
-				Regular: src.Regular,
-				Final:   src.Final,
-				Total:   src.Total,
-				Year:    src.Year,
-				Term:    src.Term,
+	res := GradeChartVo{}
+	gradeCnt := float64(len(gradesRes.GetGrades()))
+	if gradeCnt > 0 {
+		var scoreSum float64
+		for _, v := range gradesRes.GetGrades() {
+			curScore := v.GetTotal()
+			scoreSum += curScore
+			location := 0
+			switch {
+			case curScore < 40:
+			case curScore >= 40 && curScore < 50:
+				location = 1
+			case curScore >= 50 && curScore < 60:
+				location = 2
+			case curScore >= 60 && curScore < 70:
+				location = 3
+			case curScore >= 70 && curScore < 80:
+				location = 4
+			case curScore >= 80 && curScore < 90:
+				location = 5
+			case curScore >= 90 && curScore < 100:
+				location = 6
 			}
-		}),
+			res.Grades[location].TotalGrades = append(res.Grades[location].TotalGrades, curScore) // 多一个分数
+			res.Grades[location].Percent += 1                                                     // 多一个个数
+		}
+		res.Avg = scoreSum / gradeCnt // 平均分
+		for i := range res.Grades {
+			res.Grades[i].Percent /= gradeCnt
+		}
+	}
+	return ginx.Result{
+		Msg:  "Success",
+		Data: res,
 	}, nil
 }
 

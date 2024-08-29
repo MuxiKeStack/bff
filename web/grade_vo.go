@@ -8,6 +8,14 @@ type GradeVo struct {
 	Term    string  `json:"term"`    // 学期
 }
 
+type GradeChartVo struct {
+	Grades [7]struct {
+		TotalGrades []float64 `json:"total_grades"`
+		Percent     float64   `json:"percent"`
+	} `json:"grades"`
+	Avg float64 `json:"avg"`
+}
+
 type SignReq struct {
 	WantsToSign bool `json:"wants_to_sign"`
 }

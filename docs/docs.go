@@ -1419,7 +1419,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/web.GradeVo"
+                                                "$ref": "#/definitions/web.GradeChartVo"
                                             }
                                         }
                                     }
@@ -2908,28 +2908,28 @@ const docTemplate = `{
                 }
             }
         },
-        "web.GradeVo": {
+        "web.GradeChartVo": {
             "type": "object",
             "properties": {
-                "final": {
-                    "description": "期末成绩",
+                "avg": {
                     "type": "number"
                 },
-                "regular": {
-                    "description": "平时成绩",
-                    "type": "number"
-                },
-                "term": {
-                    "description": "学期",
-                    "type": "string"
-                },
-                "total": {
-                    "description": "总成绩",
-                    "type": "number"
-                },
-                "year": {
-                    "description": "学年",
-                    "type": "string"
+                "grades": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "percent": {
+                                "type": "number"
+                            },
+                            "total_grades": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
