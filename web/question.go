@@ -167,16 +167,32 @@ func (h *QuestionHandler) Detail(ctx *gin.Context) (ginx.Result, error) {
 	})
 	switch {
 	case err == nil:
+		answers, er := h.answer.ListForQuestion(ctx, &answerv1.ListForQuestionRequest{
+			QuestionId:  qid,
+			CurAnswerId: 0,
+			Limit:       3,
+		})
+		cntRes, _ := h.answer.CountForQuestion(ctx, &answerv1.CountForQuestionRequest{
+			QuestionId: qid,
+		})
+		if er != nil {
+			return ginx.Result{
+				Code: errs.InternalServerError,
+				Msg:  "系统异常",
+			}, er
+		}
 		return ginx.Result{
 			Msg: "Success",
 			Data: QuestionVo{
-				Id:           res.GetQuestion().GetId(),
-				QuestionerId: res.GetQuestion().GetQuestionerId(),
-				Biz:          res.GetQuestion().GetBiz().String(),
-				BizId:        res.GetQuestion().GetBizId(),
-				Content:      res.GetQuestion().GetContent(),
-				Utime:        res.GetQuestion().GetUtime(),
-				Ctime:        res.GetQuestion().GetCtime(),
+				Id:             res.GetQuestion().GetId(),
+				QuestionerId:   res.GetQuestion().GetQuestionerId(),
+				Biz:            res.GetQuestion().GetBiz().String(),
+				BizId:          res.GetQuestion().GetBizId(),
+				Content:        res.GetQuestion().GetContent(),
+				AnswerCnt:      cntRes.GetCnt(),
+				PreviewAnswers: answers.GetAnswers(),
+				Utime:          res.GetQuestion().GetUtime(),
+				Ctime:          res.GetQuestion().GetCtime(),
 			},
 		}, nil
 	case questionv1.IsQuestionNotFound(err):
