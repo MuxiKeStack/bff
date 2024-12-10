@@ -1,7 +1,6 @@
 package evaluation
 
 import (
-	"context"
 	"errors"
 	commentv1 "github.com/MuxiKeStack/be-api/gen/proto/comment/v1"
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
@@ -12,10 +11,8 @@ import (
 	"github.com/MuxiKeStack/bff/web/ijwt"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
-	"github.com/seata/seata-go/pkg/tm"
 	"golang.org/x/sync/errgroup"
 	"strconv"
-	"time"
 )
 
 type EvaluationHandler struct {
@@ -118,43 +115,39 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClai
 	// 已放弃分布式事务[2024.8.25]
 	// 下面涉及两个服务的原子性调用，需要使用分布式事务，这里的bff其实起到了聚合服务的作用...，引入实际意义聚合服务，目前没必要
 	// go的seatago框架相当不成熟，比如这个事务内部不能用errgroup并发这两个attach tag
-	err := tm.WithGlobalTx(ctx,
-		&tm.GtxConfig{
-			Timeout: 1000 * time.Second, // todo
-			Name:    "ATPublishAndTagTx",
-		},
-		func(ctx context.Context) error {
-			res, saveErr = h.evaluationClient.Save(ctx, &evaluationv1.SaveRequest{
-				Evaluation: &evaluationv1.Evaluation{
-					Id:          req.Id,
-					PublisherId: uc.Uid,
-					CourseId:    req.CourseId,
-					StarRating:  uint32(req.StarRating),
-					Content:     req.Content,
-					Status:      evaluationv1.EvaluationStatus(status),
-				},
-			})
-			if saveErr != nil {
-				return saveErr
-			}
-			var er error
-			_, er = h.tagClient.AttachAssessmentTags(ctx, &tagv1.AttachAssessmentTagsRequest{
-				TaggerId: uc.Uid,
-				Biz:      tagv1.Biz_Course,
-				BizId:    req.CourseId, // 外键
-				Tags:     assessmentTags,
-			})
-			if er != nil {
-				return er
-			}
-			_, er = h.tagClient.AttachFeatureTags(ctx, &tagv1.AttachFeatureTagsRequest{
-				TaggerId: uc.Uid,
-				Biz:      tagv1.Biz_Course,
-				BizId:    req.CourseId,
-				Tags:     featureTags,
-			})
-			return er
+	err := func() error {
+		res, saveErr = h.evaluationClient.Save(ctx, &evaluationv1.SaveRequest{
+			Evaluation: &evaluationv1.Evaluation{
+				Id:          req.Id,
+				PublisherId: uc.Uid,
+				CourseId:    req.CourseId,
+				StarRating:  uint32(req.StarRating),
+				Content:     req.Content,
+				Status:      evaluationv1.EvaluationStatus(status),
+			},
 		})
+		if saveErr != nil {
+			return saveErr
+		}
+		var er error
+		_, er = h.tagClient.AttachAssessmentTags(ctx, &tagv1.AttachAssessmentTagsRequest{
+			TaggerId: uc.Uid,
+			Biz:      tagv1.Biz_Course,
+			BizId:    req.CourseId, // 外键
+			Tags:     assessmentTags,
+		})
+		if er != nil {
+			return er
+		}
+		_, er = h.tagClient.AttachFeatureTags(ctx, &tagv1.AttachFeatureTagsRequest{
+			TaggerId: uc.Uid,
+			Biz:      tagv1.Biz_Course,
+			BizId:    req.CourseId,
+			Tags:     featureTags,
+		})
+		return er
+	}()
+
 	switch {
 	case err == nil:
 		return ginx.Result{

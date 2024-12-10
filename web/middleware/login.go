@@ -38,12 +38,12 @@ func (m *LoginMiddlewareBuilder) allowRestrictedAccess(path string) bool {
 
 func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// 放行游客可访问的路由，
 		uc, err := m.extractUserClaimsFromAuthorizationHeader(ctx)
 		if err == nil {
 			ctx.Set("user", uc)
 		} else {
 			if m.allowRestrictedAccess(ctx.Request.URL.Path) {
+				// 放行游客可访问的路由，
 				ctx.Set("user", uc)
 			} else {
 				ctx.AbortWithStatus(http.StatusUnauthorized)

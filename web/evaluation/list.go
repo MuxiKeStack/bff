@@ -67,9 +67,9 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 			Ctime:       src.GetCtime(),
 		}
 	})
-	var eg errgroup.Group
+	//var eg errgroup.Group
 	for i := range evaluationVos {
-		eg.Go(func() error {
+		err = func() error {
 			// 因为这个路径被设置为了可以受限访问，也就是游客访问，所以这里做了区分
 			if uc.Uid != 0 {
 				stanceRes, er := h.stanceClient.GetUserStance(ctx, &stancev1.GetUserStanceRequest{
@@ -103,9 +103,9 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 			}
 			evaluationVos[i].TotalCommentCount = countCommentRes.GetCount()
 			return nil
-		})
+		}()
 	}
-	err = eg.Wait()
+	//err = eg.Wait()
 	if err != nil {
 		return ginx.Result{
 			Code: errs.InternalServerError,

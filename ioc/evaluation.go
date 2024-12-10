@@ -5,7 +5,6 @@ import (
 	evaluationv1 "github.com/MuxiKeStack/be-api/gen/proto/evaluation/v1"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
-	grpc2 "github.com/seata/seata-go/pkg/integration/grpc"
 	"github.com/spf13/viper"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"time"
@@ -24,7 +23,6 @@ func InitEvaluationClient(ecli *clientv3.Client) evaluationv1.EvaluationServiceC
 	cc, err := grpc.DialInsecure(context.Background(),
 		grpc.WithEndpoint(cfg.Endpoint),
 		grpc.WithDiscovery(r),
-		grpc.WithUnaryInterceptor(grpc2.ClientTransactionInterceptor),
 		grpc.WithTimeout(100*time.Second), // TODO
 	)
 	if err != nil {

@@ -175,7 +175,7 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 // @Router /users/edit [post]
 func (h *UserHandler) Edit(ctx *gin.Context, req UserEditReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	usingTitle, exists := pointv1.Title_value[req.UsingTitle]
-	if !exists || req.UsingTitle == pointv1.Title_None.String() {
+	if !exists {
 		return ginx.Result{
 			Code: errs.UserInvalidInput,
 			Msg:  "无效的title",

@@ -85,7 +85,7 @@ func (r *RedisJWTHandler) setRefreshToken(ctx *gin.Context, cp ClaimParams) erro
 func (r *RedisJWTHandler) SetJWTToken(ctx *gin.Context, cp ClaimParams) error {
 	uc := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 60)),
 		},
 		Uid:       cp.Uid,
 		StudentId: cp.StudentId,
