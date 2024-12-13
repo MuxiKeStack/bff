@@ -35,6 +35,7 @@ type EvaluationVo struct {
 	TotalSupportCount int64    `json:"total_support_count"`
 	TotalOpposeCount  int64    `json:"total_oppose_count"`
 	TotalCommentCount int64    `json:"total_comment_count"`
+	IsAnonymous       bool     `json:"is_anonymous"`
 	Utime             int64    `json:"utime"`
 	Ctime             int64    `json:"ctime"`
 }

@@ -258,6 +258,7 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 			CourseId:    res.GetEvaluation().GetCourseId(),
 			StarRating:  res.GetEvaluation().GetStarRating(),
 			Content:     res.GetEvaluation().GetContent(),
+			IsAnonymous: res.GetEvaluation().GetIsAnonymous(),
 			Status:      res.GetEvaluation().GetStatus().String(),
 			Utime:       res.GetEvaluation().GetUtime(),
 			Ctime:       res.GetEvaluation().GetCtime(),

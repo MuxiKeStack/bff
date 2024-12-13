@@ -23,7 +23,7 @@ func InitEvaluationClient(ecli *clientv3.Client) evaluationv1.EvaluationServiceC
 	cc, err := grpc.DialInsecure(context.Background(),
 		grpc.WithEndpoint(cfg.Endpoint),
 		grpc.WithDiscovery(r),
-		grpc.WithTimeout(100*time.Second), // TODO
+		grpc.WithTimeout(10*time.Second), // TODO
 	)
 	if err != nil {
 		panic(err)

@@ -63,6 +63,7 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 			StarRating:  src.GetStarRating(),
 			Content:     src.GetContent(),
 			Status:      src.GetStatus().String(),
+			IsAnonymous: src.GetIsAnonymous(),
 			Utime:       src.GetUtime(),
 			Ctime:       src.GetCtime(),
 		}
@@ -162,6 +163,7 @@ func (h *EvaluationHandler) ListCourse(ctx *gin.Context, req ListCourseReq, uc i
 			StarRating:  src.GetStarRating(),
 			Content:     src.GetContent(),
 			Status:      src.GetStatus().String(),
+			IsAnonymous: src.GetIsAnonymous(),
 			Utime:       src.GetUtime(),
 			Ctime:       src.GetCtime(),
 		}
@@ -272,6 +274,7 @@ func (h *EvaluationHandler) ListMine(ctx *gin.Context, req ListMineReq, uc ijwt.
 			StarRating:  src.GetStarRating(),
 			Content:     src.GetContent(),
 			Status:      src.GetStatus().String(),
+			IsAnonymous: src.GetIsAnonymous(),
 			Utime:       src.GetUtime(),
 			Ctime:       src.GetCtime(),
 		}
