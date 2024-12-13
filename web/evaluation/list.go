@@ -105,6 +105,9 @@ func (h *EvaluationHandler) ListRecent(ctx *gin.Context, req ListRecentReq, uc i
 			evaluationVos[i].TotalCommentCount = countCommentRes.GetCount()
 			return nil
 		}()
+		if evaluationVos[i].IsAnonymous {
+			evaluationVos[i].PublisherId = 1
+		}
 	}
 	//err = eg.Wait()
 	if err != nil {
@@ -213,6 +216,9 @@ func (h *EvaluationHandler) ListCourse(ctx *gin.Context, req ListCourseReq, uc i
 			evaluationVos[i].TotalSupportCount = stanceRes.GetTotalSupports()
 			evaluationVos[i].TotalOpposeCount = stanceRes.GetTotalOpposes()
 			evaluationVos[i].TotalCommentCount = countCommentRes.GetCount()
+			if evaluationVos[i].IsAnonymous {
+				evaluationVos[i].PublisherId = 1
+			}
 			return nil
 		})
 	}
@@ -301,6 +307,9 @@ func (h *EvaluationHandler) ListMine(ctx *gin.Context, req ListMineReq, uc ijwt.
 			evaluationVos[i].TotalSupportCount = stanceRes.GetTotalSupports()
 			evaluationVos[i].TotalOpposeCount = stanceRes.GetTotalOpposes()
 			evaluationVos[i].TotalCommentCount = countCommentRes.GetCount()
+			if evaluationVos[i].IsAnonymous {
+				evaluationVos[i].PublisherId = 1
+			}
 			return nil
 		})
 	}

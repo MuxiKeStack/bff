@@ -265,6 +265,7 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 			Ctime:       res.GetEvaluation().GetCtime(),
 		}
 	)
+
 	// 聚合考核方式
 	eg.Go(func() error {
 		atRes, er := h.tagClient.GetAssessmentTagsByTaggerBiz(ctx, &tagv1.GetAssessmentTagsByTaggerBizRequest{
@@ -346,6 +347,9 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 			Code: errs.InternalServerError,
 			Msg:  "系统异常",
 		}, err
+	}
+	if evaluationVo.IsAnonymous {
+		evaluationVo.PublisherId = 1
 	}
 	return ginx.Result{
 		Msg:  "Success",
