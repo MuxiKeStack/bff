@@ -10,6 +10,7 @@ type SaveReq struct {
 	Assessments []string `json:"assessments"` // 考核方式，支持多选
 	Features    []string `json:"features"`    // 课程特点，支持多选
 	Status      string   `json:"status"`      // 可见性：Public/Private
+	IsAnonymous bool     `json:"is_anonymous"`
 }
 
 type UpdateStatusReq struct {

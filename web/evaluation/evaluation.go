@@ -124,6 +124,7 @@ func (h *EvaluationHandler) Save(ctx *gin.Context, req SaveReq, uc ijwt.UserClai
 				StarRating:  uint32(req.StarRating),
 				Content:     req.Content,
 				Status:      evaluationv1.EvaluationStatus(status),
+				IsAnonymous: req.IsAnonymous,
 			},
 		})
 		if saveErr != nil {
