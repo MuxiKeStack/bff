@@ -20,6 +20,7 @@ type EvaluationHandler struct {
 	tagClient        tagv1.TagServiceClient
 	stanceClient     stancev1.StanceServiceClient
 	commentClient    commentv1.CommentServiceClient
+	anonymousUsers   []int64
 }
 
 func NewEvaluationHandler(evaluationClient evaluationv1.EvaluationServiceClient, tagClient tagv1.TagServiceClient,
@@ -29,6 +30,7 @@ func NewEvaluationHandler(evaluationClient evaluationv1.EvaluationServiceClient,
 		tagClient:        tagClient,
 		stanceClient:     interactClient,
 		commentClient:    commentClient,
+		anonymousUsers:   []int64{-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12},
 	}
 }
 
@@ -349,10 +351,15 @@ func (h *EvaluationHandler) Detail(ctx *gin.Context, uc ijwt.UserClaims) (ginx.R
 		}, err
 	}
 	if evaluationVo.IsAnonymous {
-		evaluationVo.PublisherId = 1
+		evaluationVo.PublisherId = h.selectsAnonymousUser(evaluationVo.Id)
 	}
 	return ginx.Result{
 		Msg:  "Success",
 		Data: evaluationVo,
 	}, nil
+}
+
+func (h *EvaluationHandler) selectsAnonymousUser(bizId int64) int64 {
+	idx := bizId % 12
+	return h.anonymousUsers[idx]
 }
